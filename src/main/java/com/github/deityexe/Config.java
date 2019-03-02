@@ -2,12 +2,13 @@ package com.github.deityexe;
 
 import java.io.*;
 
-public class Config {
+class Config {
 
     private File configFile;
-    private String prefix;
+    private String prefix = "!";
+    private String token;
 
-    public Config() {
+    Config() {
         try {
             File jarDir = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
             File iniFile = new File(jarDir, "config.ini");
@@ -15,7 +16,7 @@ public class Config {
             if (iniFile.createNewFile()) {
                 FileWriter fw = new FileWriter(iniFile);
                 BufferedWriter bufferedWriter = new BufferedWriter(fw);
-                bufferedWriter.write("prefix = \"!\"\n");
+                bufferedWriter.write("prefix = \"!\"\ntoken = \"\"\n");
                 bufferedWriter.close();
                 fw.close();
             }
@@ -27,7 +28,16 @@ public class Config {
             String line = bufferedReader.readLine();
             while (line != null) {
                 if (line.startsWith("prefix")) {
-                    prefix = line.split("\"")[1];
+                    String[] split = line.split("\"");
+                    if (split.length > 1) {
+                        prefix = line.split("\"")[1];
+                    }
+                }
+                if (line.startsWith("token")) {
+                    String[] split = line.split("\"");
+                    if (split.length > 1) {
+                        token = line.split("\"")[1];
+                    }
                 }
                 line = bufferedReader.readLine();
             }
@@ -37,8 +47,12 @@ public class Config {
 
     }
 
-    public String getPrefix() {
+    String getPrefix() {
         return prefix;
+    }
+
+    String getToken() {
+        return token;
     }
 
 }

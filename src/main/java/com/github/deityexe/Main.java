@@ -4,27 +4,27 @@ import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
-import org.javacord.api.entity.message.embed.EmbedBuilder;
 
-import java.awt.*;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 
 public class Main {
-    public static String[] roleEmote = {"\uD83D\uDEE1","\uD83D\uDC96","⚔"}; //0 = tanks, 1 = supports, 2 = dds
+    static String[] roleEmote = {"\uD83D\uDEE1","\uD83D\uDC96","⚔"}; //0 = tanks, 1 = supports, 2 = dds
 
     public static void main(String[] args) {
         //create config + set prefix
         Config config = new Config();
         String prefix = config.getPrefix();
-
-        //bot token
-        String token = "NTUxMTI5OTAzODczOTE2OTM3.D1sfSQ.sxGA9fDuYhJTR8E3tnO4AoLqD5k";
+        //get bot token
+        String token = config.getToken();
+        if (token == null) {
+            System.out.println("No token specified in \"config.ini\"! Please add a token to continue.");
+            return;
+        }
 
         DiscordApi api = new DiscordApiBuilder().setToken(token).login().join();
 
