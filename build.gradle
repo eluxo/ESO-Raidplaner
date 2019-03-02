@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "4.0.3"
+}
+
+group 'com.github.deityexe'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.javacord:javacord:3.0.3'
+}
