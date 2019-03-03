@@ -10,6 +10,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.concurrent.ExecutionException;
 
 
 public class Main {
@@ -25,10 +27,6 @@ public class Main {
             System.out.println("No token specified in \"properties.ini\"! Please add a token to continue.");
             return;
         }
-
-        DiscordApi api = new DiscordApiBuilder().setToken(token).login().join();
-
-
         //init Raid Array
         List<Raid> raids = new ArrayList<>();
         try {
@@ -44,153 +42,9 @@ public class Main {
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
+        DiscordApi api = new DiscordApiBuilder().setToken(token).login().join();
 
-        api.addMessageCreateListener(event -> {
-            String content = event.getMessage().getContent();
-
-            //create Raid command
-            if (content.startsWith(prefix + "raid ")) {
-                String[] commandargs = content.split(" ");  //1 = name, 2 = date, 3 = time, 4 = amount tanks, 5 = amount supports, 6 = amount DD
-                //check for valid ints
-                //date
-                String[] dateint = commandargs[2].split("\\.");
-                if (dateint.length != 3) {
-                    event.getChannel().sendMessage("Error: Invalid date!\nCorrect Format: \"DD.MM.YYYY\"");
-                    return;
-                }
-                for(String s : dateint) {
-                    try {
-                        Integer.valueOf(s);
-                    } catch (NumberFormatException e) {
-                        event.getChannel().sendMessage("Error: Invalid date!\nCorrect Format: \"DD.MM.YYYY\"");
-                        return;
-                    }
-                }
-                //time
-                String[] timeint = commandargs[3].split(":");
-                if (timeint.length != 2) {
-                    event.getChannel().sendMessage("Error: Invalid time!\nCorrect Format:\"HH:MM\"");
-                    return;
-                }
-                for(String s : timeint) {
-                    try {
-                        Integer.valueOf(s);
-                    } catch (NumberFormatException e) {
-                        event.getChannel().sendMessage("Error: Invalid time!\nCorrect Format:\"HH:MM\"");
-                        return;
-                    }
-                }
-                //roles
-                int tanks, supports, dds;
-                //tanks
-                try {
-                    tanks = Integer.valueOf(commandargs[4]);
-                } catch (NumberFormatException e) {
-                    event.getChannel().sendMessage("Error: Invalid integer at argument \"tank\"!");
-                    return;
-                }
-                //supports
-                try {
-                    supports = Integer.valueOf(commandargs[5]);
-                } catch (NumberFormatException e) {
-                    event.getChannel().sendMessage("Error: Invalid integer at argument \"support\"!");
-                    return;
-                }
-                //dds
-                try {
-                    dds = Integer.valueOf(commandargs[6]);
-                } catch (NumberFormatException e) {
-                    event.getChannel().sendMessage("Error: Invalid integer at argument \"DD\"!");
-                    return;
-                }
-                //check role amount
-                if ((tanks + supports + dds) < 12) {
-                    event.getChannel().sendMessage("Error: Not enough roles specified!");
-                    return;
-                }
-                if ((tanks + supports + dds) > 12) {
-                    event.getChannel().sendMessage("Error: Too many roles specified!");
-                    return;
-                }
-                //create Raid object
-                Raid raid = new Raid(commandargs);
-                //add Raid object to List
-                raids.add(raid);
-
-                //send Raid info Message
-                Message RaidMessage = new MessageBuilder().append("Raid Event erfolgreich erstellt:").setEmbed(raid.getEmbed()).send(event.getChannel()).join();
-
-                //add reactions
-                for (int i = 0; i < 3; i++) {
-                    RaidMessage.addReaction(roleEmote[i]);
-                }
-
-                //save Message in Raid Object
-                raid.setRaidmessageID(RaidMessage);
-            }
-
-
-            //print registered raid user
-            if (content.startsWith(prefix + "raidlist ")) {
-                String raidname = content.split(" ")[1];
-                Raid raid = null;
-                //search raid
-                for (Raid r : raids) {
-                    if (r.getName().equals(raidname)) {
-                        raid = r;
-                    }
-                }
-                if (raid == null) {
-                    event.getChannel().sendMessage("Error: Raid not found!");
-                    return;
-                }
-
-                MessageBuilder msgbuilder = new MessageBuilder().append("__**Angemeldete Spieler für \"" + raid.getName() + "\":**__\n\n");
-                //add Tanks
-                msgbuilder.append("**Tanks " + roleEmote[0] + "**\n");
-                for (long usrID : raid.getRegisteredTanks()) {
-                    try {
-                        msgbuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
-                    } catch (Exception e) {
-                        msgbuilder.append("- *[deleted]*\n");
-                        e.printStackTrace();
-                    }
-                }
-                msgbuilder.appendNewLine();
-                //add Healer
-                msgbuilder.append("**Healer " + roleEmote[1] + "**\n");
-                for (long usrID : raid.getRegisteredSupports()) {
-                    try {
-                        msgbuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
-                    } catch (Exception e) {
-                        msgbuilder.append("- *Missing User*\n");
-                        e.printStackTrace();
-                    }
-                }
-                msgbuilder.appendNewLine();
-                //add DD
-                msgbuilder.append("**DDs " + roleEmote[2] + "**\n");
-                for (long usrID : raid.getRegisteredDDs()) {
-                    try {
-                        msgbuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
-                    } catch (Exception e) {
-                        msgbuilder.append("- *Missing User*\n");
-                        e.printStackTrace();
-                    }
-                }
-                //print result
-                msgbuilder.send(event.getChannel()).join();
-            }
-
-            //print all current raids
-            if (content.startsWith(prefix + "raids")) {
-                MessageBuilder msgbuilder = new MessageBuilder().append("**Alle aktiven Raid Events:**\n");
-                for (Raid r : raids) {
-                    msgbuilder.append("- " + r.getName() + " (" + r.getDate().get(Calendar.DATE) + "." + (r.getDate().get(Calendar.MONTH) + 1) + "." + r.getDate().get(Calendar.YEAR) + ", " + r.getDate().get(Calendar.HOUR_OF_DAY) + ":" + r.getDate().get(Calendar.MINUTE) + ")\n");
-                }
-                msgbuilder.send(event.getChannel()).join();
-            }
-        });
+        api.addMessageCreateListener(new Commands(api, prefix, raids));
 
         api.addReactionAddListener(event -> {
            for (Raid r : raids) {

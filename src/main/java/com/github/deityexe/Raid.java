@@ -1,6 +1,8 @@
 package com.github.deityexe;
 
+import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 
@@ -291,6 +293,47 @@ class Raid {
                         .setColor(Color.white)
                         .setTitle(this.name + " (" + this.date.get(Calendar.DATE) + "." + (this.date.get(Calendar.MONTH) + 1) + "." + this.date.get(Calendar.YEAR) + ", " + this.date.get(Calendar.HOUR_OF_DAY) + ":" + this.date.get((Calendar.MINUTE)) + ")")
                         .setDescription("Gesuchte Rollen:\n" + this.tanks + " Tanks " + roleEmote[0] +", " + this.supports + " Healer " + roleEmote[1] + ", " + this.dds + " DDs " + roleEmote[2] + ".");
+    }
+
+    MessageBuilder getUserList(DiscordApi api) {
+        MessageBuilder msgbuilder = new MessageBuilder().append("__**Angemeldete Spieler für \"" + this.name + "\":**__\n\n");
+        //add Tanks
+        msgbuilder.append("**Tanks " + roleEmote[0] + "**\n");
+        for (long usrID : this.registeredTanks) {
+            try {
+                msgbuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
+            } catch (Exception e) {
+                msgbuilder.append("- *[deleted]*\n");
+                e.printStackTrace();
+            }
+        }
+        msgbuilder.appendNewLine();
+        //add Healer
+        msgbuilder.append("**Healer " + roleEmote[1] + "**\n");
+        for (long usrID : this.registeredSupports) {
+            try {
+                msgbuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
+            } catch (Exception e) {
+                msgbuilder.append("- *Missing User*\n");
+                e.printStackTrace();
+            }
+        }
+        msgbuilder.appendNewLine();
+        //add DD
+        msgbuilder.append("**DDs " + roleEmote[2] + "**\n");
+        for (long usrID : this.registeredDDs) {
+            try {
+                msgbuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
+            } catch (Exception e) {
+                msgbuilder.append("- *Missing User*\n");
+                e.printStackTrace();
+            }
+        }
+        return  msgbuilder;
+    }
+
+    boolean deleteRaid() {
+        return this.raidfile.delete();
     }
 
 }
