@@ -1,7 +1,6 @@
 package com.github.deityexe;
 
 import org.javacord.api.entity.message.Message;
-import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static com.github.deityexe.Main.roleEmote;
 
-public class Raid {
+class Raid {
     private String name;
     private Calendar date;
     private int tanks, supports, dds;
@@ -27,19 +26,21 @@ public class Raid {
 
     /**
      * Construct Raid Object from arguments
-     * @param args 1 = name, 2 = date, 3 = amount tanks, 4 = amount supports, 5 = amount DD
+     * @param args 1 = name, 2 = date, 3 = time, 4 = amount tanks, 5 = amount supports, 6 = amount DD
      */
-    public Raid (String[] args) {
+    Raid(String[] args) {
         try {
             this.name = args[1];
             //create Calendar
             String[] date = args[2].split("\\.");
+            String[] time = args[3].split(":");
             this.date = Calendar.getInstance();
-            this.date.set(Integer.valueOf(date[2]),Integer.valueOf(date[1]) - 1, Integer.valueOf(date[0]));
+            //noinspection MagicConstant
+            this.date.set(Integer.valueOf(date[2]),Integer.valueOf(date[1]) - 1, Integer.valueOf(date[0]), Integer.valueOf(time[0]), Integer.valueOf(time[1]));
 
-            this.tanks = Integer.valueOf(args[3]);
-            this.supports = Integer.valueOf(args[4]);
-            this.dds = Integer.valueOf(args[5]);
+            this.tanks = Integer.valueOf(args[4]);
+            this.supports = Integer.valueOf(args[5]);
+            this.dds = Integer.valueOf(args[6]);
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
@@ -49,15 +50,20 @@ public class Raid {
             File raidFolder = new File(jarDir, "raids");
             if(!raidFolder.exists()) {
                 if (!raidFolder.mkdir()) {
-                    System.out.println("Creating Raid folder failed!");
+                    System.out.println("Creating raids folder failed!");
                 }
             }
             this.raidfile = new File(raidFolder,this.name + ".raid");
-            this.raidfile.createNewFile();
+            if(!this.raidfile.exists()) {
+                if(!this.raidfile.createNewFile()) {
+                    System.out.println("Creating raid file failed!");
+                }
+            }
+
             //write raid info into file
             try (FileWriter fw = new FileWriter(raidfile); BufferedWriter bufferedWriter = new BufferedWriter(fw)) {
                 bufferedWriter.write("name = \"" + this.name + "\"\n");
-                bufferedWriter.write("date = " + this.date.getTimeInMillis() + "\n");
+                bufferedWriter.write("date = " + (this.date != null ? this.date.getTimeInMillis() : 0) + "\n");
                 bufferedWriter.write("tanks = " + this.tanks + "\n");
                 bufferedWriter.write("supports = " + this.supports + "\n");
                 bufferedWriter.write("dds = " + this.dds + "\n");
@@ -76,7 +82,7 @@ public class Raid {
      * Constructs Raid Object from file
      * @param rfile Raid file in raids folder
      */
-    public Raid (File rfile) {
+    Raid(File rfile) {
         try (FileReader fr = new FileReader(rfile); BufferedReader bufferedReader = new BufferedReader(fr)) {
             String line = bufferedReader.readLine();
             while (line != null) {
@@ -141,31 +147,19 @@ public class Raid {
         }
     }
 
-    public String getName() {
+    String getName() {
         return name;
     }
 
-    public Calendar getDate() {
+    Calendar getDate() {
         return date;
     }
 
-    public int getTanks() {
-        return tanks;
-    }
-
-    public int getSupports() {
-        return supports;
-    }
-
-    public int getDds() {
-        return dds;
-    }
-
-    public Long getRaidmessageID() {
+    Long getRaidmessageID() {
         return raidmessageID;
     }
 
-    public void setRaidmessageID(Message raidmessage) {
+    void setRaidmessageID(Message raidmessage) {
         this.raidmessageID = raidmessage.getId();
 
         try {
@@ -181,92 +175,122 @@ public class Raid {
         }
     }
 
-    public void registerTank(User usr) {
+    void registerTank(User usr) {
         if (!this.registeredTanks.contains(usr.getId())) {
             this.registeredTanks.add(usr.getId());
-
-            try {
-                List<String> lines = Files.readAllLines(raidfile.toPath());     //dirty solution
-                for (int i = 0; i < lines.size(); i++) {
-                    if (lines.get(i).startsWith("registeredTanks")) {
-                        String line = "registeredTanks = #";
-                        for (long id : this.registeredTanks) {
-                            line = line + id + "#";
-                        }
-                        lines.set(i,line);
-                    }
-                }
-                Files.write(raidfile.toPath(),lines);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            this.updateTankListFile();
         }
     }
 
-    public void registerSupport(User usr) {
+    void removeTank(User usr) {
+        if (this.registeredTanks.contains(usr.getId())) {
+            this.registeredTanks.remove(usr.getId());
+            this.updateTankListFile();
+        }
+    }
+
+    private void updateTankListFile() {
+        try {
+            List<String> lines = Files.readAllLines(raidfile.toPath());     //dirty solution
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).startsWith("registeredTanks")) {
+                    StringBuilder line = new StringBuilder("registeredTanks = #");
+                    for (long id : this.registeredTanks) {
+                        line.append(id).append("#");
+                    }
+                    lines.set(i, line.toString());
+                }
+            }
+            Files.write(raidfile.toPath(),lines);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void registerSupport(User usr) {
         if (!this.registeredSupports.contains(usr.getId())) {
             this.registeredSupports.add(usr.getId());
-
-            try {
-                List<String> lines = Files.readAllLines(raidfile.toPath());     //dirty solution
-                for (int i = 0; i < lines.size(); i++) {
-                    if (lines.get(i).startsWith("registeredSupports")) {
-                        String line = "registeredSupports = #";
-                        for (long id : this.registeredSupports) {
-                            line = line + id + "#";
-                        }
-                        lines.set(i,line);
-                    }
-                }
-                Files.write(raidfile.toPath(),lines);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            this.updateSupportListFile();
         }
     }
 
-    public void registerDD(User usr) {
+    void removeSupport(User usr) {
+        if (!this.registeredSupports.contains(usr.getId())) {
+            this.registeredSupports.remove(usr.getId());
+            this.updateSupportListFile();
+        }
+    }
+
+    private void updateSupportListFile() {
+        try {
+            List<String> lines = Files.readAllLines(raidfile.toPath());     //dirty solution
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).startsWith("registeredSupports")) {
+                    StringBuilder line = new StringBuilder("registeredSupports = #");
+                    for (long id : this.registeredSupports) {
+                        line.append(id).append("#");
+                    }
+                    lines.set(i, line.toString());
+                }
+            }
+            Files.write(raidfile.toPath(),lines);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void registerDD(User usr) {
         if (!this.registeredDDs.contains(usr.getId())) {
             this.registeredDDs.add(usr.getId());
-
-            try {
-                List<String> lines = Files.readAllLines(raidfile.toPath());     //dirty solution
-                for (int i = 0; i < lines.size(); i++) {
-                    if (lines.get(i).startsWith("registeredDDs")) {
-                        String line = "registeredDDs = #";
-                        for (long id : this.registeredDDs) {
-                            line = line + id + "#";
-                        }
-                        lines.set(i,line);
-                    }
-                }
-                Files.write(raidfile.toPath(),lines);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            this.updateDDListFile();
         }
     }
 
-    public List<Long> getRegisteredTanks() {
+    void removeDD(User usr) {
+        if (!this.registeredDDs.contains(usr.getId())) {
+            this.registeredDDs.remove(usr.getId());
+            this.updateDDListFile();
+        }
+    }
+
+    private void updateDDListFile() {
+        try {
+            List<String> lines = Files.readAllLines(raidfile.toPath());     //dirty solution
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).startsWith("registeredDDs")) {
+                    StringBuilder line = new StringBuilder("registeredDDs = #");
+                    for (long id : this.registeredDDs) {
+                        line.append(id).append("#");
+                    }
+                    lines.set(i, line.toString());
+                }
+            }
+            Files.write(raidfile.toPath(),lines);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    List<Long> getRegisteredTanks() {
         return registeredTanks;
     }
 
-    public List<Long> getRegisteredSupports() {
+    List<Long> getRegisteredSupports() {
         return registeredSupports;
     }
 
-    public List<Long> getRegisteredDDs() {
+    List<Long> getRegisteredDDs() {
         return registeredDDs;
     }
 
-    public EmbedBuilder getEmbed() {
+    EmbedBuilder getEmbed() {
         return new EmbedBuilder()
                         .setColor(Color.white)
-                        .setTitle(this.getName() + " (" + this.getDate().get(Calendar.DATE) + "." + (this.getDate().get(Calendar.MONTH) + 1) + "." + this.getDate().get(Calendar.YEAR) + ")")
-                        .setDescription("Gesuchte Rollen:\n" + this.getTanks() + " Tanks " + roleEmote[0] +", " + this.getSupports() + " Healer " + roleEmote[1] + ", " + this.getDds() + " DDs " + roleEmote[2] + ".");
+                        .setTitle(this.name + " (" + this.date.get(Calendar.DATE) + "." + (this.date.get(Calendar.MONTH) + 1) + "." + this.date.get(Calendar.YEAR) + ", " + this.date.get(Calendar.HOUR_OF_DAY) + ":" + this.date.get((Calendar.MINUTE)) + ")")
+                        .setDescription("Gesuchte Rollen:\n" + this.tanks + " Tanks " + roleEmote[0] +", " + this.supports + " Healer " + roleEmote[1] + ", " + this.dds + " DDs " + roleEmote[2] + ".");
     }
 
 }

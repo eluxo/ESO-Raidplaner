@@ -16,13 +16,13 @@ public class Main {
     static String[] roleEmote = {"\uD83D\uDEE1","\uD83D\uDC96","⚔"}; //0 = tanks, 1 = supports, 2 = dds
 
     public static void main(String[] args) {
-        //create config + set prefix
-        Config config = new Config();
-        String prefix = config.getPrefix();
+        //create properties + set prefix
+        Properties properties = new Properties();
+        String prefix = properties.getPrefix();
         //get bot token
-        String token = config.getToken();
+        String token = properties.getToken();
         if (token == null) {
-            System.out.println("No token specified in \"config.ini\"! Please add a token to continue.");
+            System.out.println("No token specified in \"properties.ini\"! Please add a token to continue.");
             return;
         }
 
@@ -50,7 +50,7 @@ public class Main {
 
             //create Raid command
             if (content.startsWith(prefix + "raid ")) {
-                String[] commandargs = content.split(" ");  //1 = name, 2 = date, 3 = amount tanks, 4 = amount supports, 5 = amount DD
+                String[] commandargs = content.split(" ");  //1 = name, 2 = date, 3 = time, 4 = amount tanks, 5 = amount supports, 6 = amount DD
                 //check for valid ints
                 //date
                 String[] dateint = commandargs[2].split("\\.");
@@ -66,25 +66,39 @@ public class Main {
                         return;
                     }
                 }
+                //time
+                String[] timeint = commandargs[3].split(":");
+                if (timeint.length != 2) {
+                    event.getChannel().sendMessage("Error: Invalid time!\nCorrect Format:\"HH:MM\"");
+                    return;
+                }
+                for(String s : timeint) {
+                    try {
+                        Integer.valueOf(s);
+                    } catch (NumberFormatException e) {
+                        event.getChannel().sendMessage("Error: Invalid time!\nCorrect Format:\"HH:MM\"");
+                        return;
+                    }
+                }
                 //roles
                 int tanks, supports, dds;
                 //tanks
                 try {
-                    tanks = Integer.valueOf(commandargs[3]);
+                    tanks = Integer.valueOf(commandargs[4]);
                 } catch (NumberFormatException e) {
                     event.getChannel().sendMessage("Error: Invalid integer at argument \"tank\"!");
                     return;
                 }
                 //supports
                 try {
-                    supports = Integer.valueOf(commandargs[4]);
+                    supports = Integer.valueOf(commandargs[5]);
                 } catch (NumberFormatException e) {
                     event.getChannel().sendMessage("Error: Invalid integer at argument \"support\"!");
                     return;
                 }
                 //dds
                 try {
-                    dds = Integer.valueOf(commandargs[5]);
+                    dds = Integer.valueOf(commandargs[6]);
                 } catch (NumberFormatException e) {
                     event.getChannel().sendMessage("Error: Invalid integer at argument \"DD\"!");
                     return;
@@ -131,19 +145,20 @@ public class Main {
                     return;
                 }
 
-                MessageBuilder msgbuilder = new MessageBuilder().append("**Angemeldete Spieler für \"" + raid.getName() + "\":**\n");
+                MessageBuilder msgbuilder = new MessageBuilder().append("__**Angemeldete Spieler für \"" + raid.getName() + "\":**__\n\n");
                 //add Tanks
-                msgbuilder.append("Tanks " + roleEmote[0] + "\n");
+                msgbuilder.append("**Tanks " + roleEmote[0] + "**\n");
                 for (long usrID : raid.getRegisteredTanks()) {
                     try {
                         msgbuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
                     } catch (Exception e) {
-                        msgbuilder.append("- *Missing User*\n");
+                        msgbuilder.append("- *[deleted]*\n");
                         e.printStackTrace();
                     }
                 }
+                msgbuilder.appendNewLine();
                 //add Healer
-                msgbuilder.append("Healer " + roleEmote[1] + "\n");
+                msgbuilder.append("**Healer " + roleEmote[1] + "**\n");
                 for (long usrID : raid.getRegisteredSupports()) {
                     try {
                         msgbuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
@@ -152,8 +167,9 @@ public class Main {
                         e.printStackTrace();
                     }
                 }
+                msgbuilder.appendNewLine();
                 //add DD
-                msgbuilder.append("DDs " + roleEmote[2] + "\n");
+                msgbuilder.append("**DDs " + roleEmote[2] + "**\n");
                 for (long usrID : raid.getRegisteredDDs()) {
                     try {
                         msgbuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
@@ -170,7 +186,7 @@ public class Main {
             if (content.startsWith(prefix + "raids")) {
                 MessageBuilder msgbuilder = new MessageBuilder().append("**Alle aktiven Raid Events:**\n");
                 for (Raid r : raids) {
-                    msgbuilder.append("- " + r.getName() + " (" + r.getDate().get(Calendar.DATE) + "." + (r.getDate().get(Calendar.MONTH) + 1) + "." + r.getDate().get(Calendar.YEAR) + ")\n");
+                    msgbuilder.append("- " + r.getName() + " (" + r.getDate().get(Calendar.DATE) + "." + (r.getDate().get(Calendar.MONTH) + 1) + "." + r.getDate().get(Calendar.YEAR) + ", " + r.getDate().get(Calendar.HOUR_OF_DAY) + ":" + r.getDate().get(Calendar.MINUTE) + ")\n");
                 }
                 msgbuilder.send(event.getChannel()).join();
             }
@@ -182,20 +198,42 @@ public class Main {
                        //register tank
                        if (event.getEmoji().equalsEmoji(roleEmote[0])) {
                            r.registerTank(event.getUser());
-                           event.getUser().sendMessage("Erfolgreich für \"" + r.getName() + "\" als Rolle \"Tank " + roleEmote[0] + "\" angemeldet!");
+                           event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"Tank " + roleEmote[0] + "\" angemeldet!");
                        }
                        //register support
                        if (event.getEmoji().equalsEmoji(roleEmote[1])) {
                            r.registerSupport(event.getUser());
-                           event.getUser().sendMessage("Erfolgreic für \"" + r.getName() + "\" als Rolle \"Healer " + roleEmote[1] + "\" angemeldet!");
+                           event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"Healer " + roleEmote[1] + "\" angemeldet!");
                        }
                        //register DD
                        if (event.getEmoji().equalsEmoji(roleEmote[2])) {
                            r.registerDD(event.getUser());
-                           event.getUser().sendMessage("Erfolgreich für \"" + r.getName() + "\" als Rolle \"DD " + roleEmote[2] + "\" angemeldet!");
+                           event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"DD " + roleEmote[2] + "\" angemeldet!");
                        }
                    }
            }
+        });
+
+        api.addReactionRemoveListener(event -> {
+            for (Raid r : raids) {
+                if (event.getMessageId() == r.getRaidmessageID() && event.getUser() != api.getYourself()) {
+                    //remove tank
+                    if (event.getEmoji().equalsEmoji(roleEmote[0])) {
+                        r.removeTank(event.getUser());
+                        event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"Tank " + roleEmote[0] + "\" __**abgemeldet**__!");
+                    }
+                    //remove support
+                    if (event.getEmoji().equalsEmoji(roleEmote[1])) {
+                        r.removeSupport(event.getUser());
+                        event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"Healer " + roleEmote[1] + "\" __**abgemeldet**__!");
+                    }
+                    //remove DD
+                    if (event.getEmoji().equalsEmoji(roleEmote[2])) {
+                        r.removeDD(event.getUser());
+                        event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"DD " + roleEmote[2] + "\" __**abgemeldet**__!");
+                    }
+                }
+            }
         });
     }
 

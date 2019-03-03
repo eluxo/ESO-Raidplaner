@@ -2,21 +2,21 @@ package com.github.deityexe;
 
 import java.io.*;
 
-class Config {
+class Properties {
 
     private File configFile;
     private String prefix = "!";
     private String token;
 
-    Config() {
+    Properties() {
         try {
             File jarDir = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-            File iniFile = new File(jarDir, "config.ini");
+            File iniFile = new File(jarDir, "bot.properties");
             //create File and set values
             if (iniFile.createNewFile()) {
                 FileWriter fw = new FileWriter(iniFile);
                 BufferedWriter bufferedWriter = new BufferedWriter(fw);
-                bufferedWriter.write("prefix = \"!\"\ntoken = \"\"\n");
+                bufferedWriter.write("token = \"\"\nprefix = \"!\"\n");
                 bufferedWriter.close();
                 fw.close();
             }
