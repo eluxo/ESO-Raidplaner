@@ -10,17 +10,18 @@ class Properties {
 
     Properties() {
         try {
-            File jarDir = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-            File iniFile = new File(jarDir, "bot.properties");
+            File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+            File jarDir = jarFile.getParentFile();
+            File propertiesFile = new File(jarDir, "bot.properties");
             //create File and set values
-            if (iniFile.createNewFile()) {
-                FileWriter fw = new FileWriter(iniFile);
+            if (propertiesFile.createNewFile()) {
+                FileWriter fw = new FileWriter(propertiesFile);
                 BufferedWriter bufferedWriter = new BufferedWriter(fw);
                 bufferedWriter.write("token = \"\"\nprefix = \"!\"\n");
                 bufferedWriter.close();
                 fw.close();
             }
-            configFile = iniFile;
+            configFile = propertiesFile;
 
             FileReader fr = new FileReader(configFile);
             BufferedReader bufferedReader = new BufferedReader(fr);

@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.github.deityexe'
-version '1.0-SNAPSHOT'
+version '1.0'
 
 sourceCompatibility = 1.8
 
@@ -14,4 +14,21 @@ repositories {
 
 dependencies {
     implementation 'org.javacord:javacord:3.0.3'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': version,
+                'Main-Class': 'com.github.deityexe.Main',
+                'sourceCompatibility': sourceCompatibility
+        )
+    }
+}
+
+shadowJar {
+    baseName = project.name
+    classifier = null
+    version = version
 }

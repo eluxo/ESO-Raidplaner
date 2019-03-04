@@ -2,20 +2,15 @@ package com.github.deityexe;
 
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
-import org.javacord.api.entity.message.Message;
-import org.javacord.api.entity.message.MessageBuilder;
 
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.concurrent.ExecutionException;
 
 
 public class Main {
-    static String[] roleEmote = {"\uD83D\uDEE1","\uD83D\uDC96","⚔"}; //0 = tanks, 1 = supports, 2 = dds
+    static String[] roleEmote = {"\uD83D\uDEE1","\uD83D\uDC96","\u2694"}; //0 = tanks, 1 = supports, 2 = dds
 
     public static void main(String[] args) {
         //create properties + set prefix
@@ -30,7 +25,8 @@ public class Main {
         //init Raid Array
         List<Raid> raids = new ArrayList<>();
         try {
-            File jarDir = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+            File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+            File jarDir = jarFile.getParentFile();
             File raidFolder = new File(jarDir, "raids");
             File[] raidfiles = raidFolder.listFiles();
             if(raidFolder.exists() && raidfiles != null) {
@@ -52,17 +48,17 @@ public class Main {
                        //register tank
                        if (event.getEmoji().equalsEmoji(roleEmote[0])) {
                            r.registerTank(event.getUser());
-                           event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"Tank " + roleEmote[0] + "\" angemeldet!");
+                           event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + r.getName() + "\" als Rolle \"Tank " + roleEmote[0] + "\" angemeldet!");
                        }
                        //register support
                        if (event.getEmoji().equalsEmoji(roleEmote[1])) {
                            r.registerSupport(event.getUser());
-                           event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"Healer " + roleEmote[1] + "\" angemeldet!");
+                           event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + r.getName() + "\" als Rolle \"Healer " + roleEmote[1] + "\" angemeldet!");
                        }
                        //register DD
                        if (event.getEmoji().equalsEmoji(roleEmote[2])) {
                            r.registerDD(event.getUser());
-                           event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"DD " + roleEmote[2] + "\" angemeldet!");
+                           event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + r.getName() + "\" als Rolle \"DD " + roleEmote[2] + "\" angemeldet!");
                        }
                    }
            }
@@ -74,17 +70,17 @@ public class Main {
                     //remove tank
                     if (event.getEmoji().equalsEmoji(roleEmote[0])) {
                         r.removeTank(event.getUser());
-                        event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"Tank " + roleEmote[0] + "\" __**abgemeldet**__!");
+                        event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + r.getName() + "\" als Rolle \"Tank " + roleEmote[0] + "\" __**abgemeldet**__!");
                     }
                     //remove support
                     if (event.getEmoji().equalsEmoji(roleEmote[1])) {
                         r.removeSupport(event.getUser());
-                        event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"Healer " + roleEmote[1] + "\" __**abgemeldet**__!");
+                        event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + r.getName() + "\" als Rolle \"Healer " + roleEmote[1] + "\" __**abgemeldet**__!");
                     }
                     //remove DD
                     if (event.getEmoji().equalsEmoji(roleEmote[2])) {
                         r.removeDD(event.getUser());
-                        event.getUser().sendMessage("Du hast dich erfolgreich für \"" + r.getName() + "\" als Rolle \"DD " + roleEmote[2] + "\" __**abgemeldet**__!");
+                        event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + r.getName() + "\" als Rolle \"DD " + roleEmote[2] + "\" __**abgemeldet**__!");
                     }
                 }
             }

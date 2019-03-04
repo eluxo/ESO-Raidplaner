@@ -1,21 +1,16 @@
 package com.github.deityexe;
 
 import org.javacord.api.DiscordApi;
-import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 
 import static com.github.deityexe.Main.roleEmote;
 
@@ -157,11 +152,15 @@ public class Commands implements MessageCreateListener {
 
         //print all current raids
         if (content.startsWith(prefix + "raids")) {
-            MessageBuilder msgbuilder = new MessageBuilder().append("**Alle aktiven Raid Events:**\n");
-            for (Raid r : raids) {
-                msgbuilder.append("- " + r.getName() + " (" + r.getDate().get(Calendar.DATE) + "." + (r.getDate().get(Calendar.MONTH) + 1) + "." + r.getDate().get(Calendar.YEAR) + ", " + r.getDate().get(Calendar.HOUR_OF_DAY) + ":" + r.getDate().get(Calendar.MINUTE) + ")\n");
+            if (raids.size() == 0) {
+                event.getChannel().sendMessage("**Es gibt noch keine aktiven Raid Events!**");
+            } else {
+                MessageBuilder msgbuilder = new MessageBuilder().append("**Alle aktiven Raid Events:**\n");
+                for (Raid r : raids) {
+                    msgbuilder.append("- " + r.getName() + " (" + r.getDate().get(Calendar.DATE) + "." + (r.getDate().get(Calendar.MONTH) + 1) + "." + r.getDate().get(Calendar.YEAR) + ", " + r.getDate().get(Calendar.HOUR_OF_DAY) + ":" + r.getDate().get(Calendar.MINUTE) + ")\n");
+                }
+                msgbuilder.send(event.getChannel()).join();
             }
-            msgbuilder.send(event.getChannel()).join();
 
             //remove command
             try {
@@ -188,7 +187,7 @@ public class Commands implements MessageCreateListener {
                     }
                     if (event.getMessageAuthor().asUser().isPresent()) {
                         try {
-                            event.getChannel().sendMessage("__**Anmeldung für \"" + r.getName() + "\" wurde geschlossen!**__");
+                            event.getChannel().sendMessage("__**Anmeldung f\u00fcr \"" + r.getName() + "\" wurde geschlossen!**__");
                             r.getUserList(api).send(event.getMessageAuthor().asUser().get().openPrivateChannel().get());
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -235,7 +234,7 @@ public class Commands implements MessageCreateListener {
                     .append("**Anmeldungslist anzeigen:**\n").append(prefix).append("userlist *[Raidname]*\n\n")
                     .append("**Alle aktiven Raids anzeigen:**\n").append(prefix).append("raids\n\n")
                     .append("**Raid beenden:**\n").append(prefix).append("endraid *[Raidname]*\n\n\n")
-                    .append("*Bei Problemen wenden sie sich an meinen Schöpfer:*\n").append("https://twitter.com/DeiTYmon")
+                    .append("*Bei Problemen wende dich an meinen Sch\u00f6pfer:*\n").append("https://twitter.com/DeiTYmon")
                     .send(channel).join();
         }
     }

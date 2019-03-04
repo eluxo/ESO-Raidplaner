@@ -48,7 +48,8 @@ class Raid {
         }
         //create Raidfile
         try {
-            File jarDir = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+            File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+            File jarDir = jarFile.getParentFile();
             File raidFolder = new File(jarDir, "raids");
             if(!raidFolder.exists()) {
                 if (!raidFolder.mkdir()) {
@@ -218,7 +219,7 @@ class Raid {
     }
 
     void removeSupport(User usr) {
-        if (!this.registeredSupports.contains(usr.getId())) {
+        if (this.registeredSupports.contains(usr.getId())) {
             this.registeredSupports.remove(usr.getId());
             this.updateSupportListFile();
         }
@@ -251,7 +252,7 @@ class Raid {
     }
 
     void removeDD(User usr) {
-        if (!this.registeredDDs.contains(usr.getId())) {
+        if (this.registeredDDs.contains(usr.getId())) {
             this.registeredDDs.remove(usr.getId());
             this.updateDDListFile();
         }
@@ -296,7 +297,7 @@ class Raid {
     }
 
     MessageBuilder getUserList(DiscordApi api) {
-        MessageBuilder msgbuilder = new MessageBuilder().append("__**Angemeldete Spieler für \"" + this.name + "\":**__\n\n");
+        MessageBuilder msgbuilder = new MessageBuilder().append("__**Angemeldete Spieler f\u00fcr \"" + this.name + "\":**__\n\n");
         //add Tanks
         msgbuilder.append("**Tanks " + roleEmote[0] + "**\n");
         for (long usrID : this.registeredTanks) {
