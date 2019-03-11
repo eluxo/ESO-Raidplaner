@@ -45,20 +45,35 @@ public class Main {
         api.addReactionAddListener(event -> {
            for (Raid r : raids) {
                    if (event.getMessageId() == r.getRaidmessageID() && event.getUser() != api.getYourself()) {
+                       boolean valid = false;
                        //register tank
                        if (event.getEmoji().equalsEmoji(roleEmote[0])) {
                            r.registerTank(event.getUser());
+                           valid = true;
                            event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + r.getName() + "\" als Rolle \"Tank " + roleEmote[0] + "\" angemeldet!");
                        }
                        //register support
                        if (event.getEmoji().equalsEmoji(roleEmote[1])) {
                            r.registerSupport(event.getUser());
+                           valid = true;
                            event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + r.getName() + "\" als Rolle \"Healer " + roleEmote[1] + "\" angemeldet!");
                        }
                        //register DD
                        if (event.getEmoji().equalsEmoji(roleEmote[2])) {
                            r.registerDD(event.getUser());
+                           valid = true;
                            event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + r.getName() + "\" als Rolle \"DD " + roleEmote[2] + "\" angemeldet!");
+                       }
+                       //invalid reaction -> remove reaction
+                       if(!valid) {
+                           if (event.getMessage().isPresent()) {
+                               try {
+                                   event.getMessage().get().removeReactionByEmoji(event.getEmoji()).join();
+                               } catch (Exception e) {
+                                   e.printStackTrace();
+                               }
+                           }
+
                        }
                    }
            }
