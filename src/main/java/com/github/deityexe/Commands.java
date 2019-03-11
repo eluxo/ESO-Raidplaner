@@ -157,7 +157,7 @@ public class Commands implements MessageCreateListener {
             } else {
                 MessageBuilder msgbuilder = new MessageBuilder().append("**Alle aktiven Raid Events:**\n");
                 for (Raid r : raids) {
-                    msgbuilder.append("- " + r.getName() + " (" + r.getDate().get(Calendar.DATE) + "." + (r.getDate().get(Calendar.MONTH) + 1) + "." + r.getDate().get(Calendar.YEAR) + ", " + r.getDate().get(Calendar.HOUR_OF_DAY) + ":" + r.getDate().get(Calendar.MINUTE) + ")\n");
+                    msgbuilder.append("- " + r.getName() + " (" + r.getDate().get(Calendar.DATE) + "." + (r.getDate().get(Calendar.MONTH) + 1) + "." + r.getDate().get(Calendar.YEAR) + ", " + r.getTime() + ")\n");
                 }
                 msgbuilder.send(event.getChannel()).join();
             }

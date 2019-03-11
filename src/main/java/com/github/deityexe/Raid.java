@@ -289,10 +289,18 @@ class Raid {
         return registeredDDs;
     }
 
+    String getTime() {
+        if (this.date.get((Calendar.MINUTE)) < 10) {
+            return this.date.get(Calendar.HOUR_OF_DAY) + ":0" + this.date.get(Calendar.MINUTE);
+        } else {
+            return this.date.get(Calendar.HOUR_OF_DAY) + ":" + this.date.get(Calendar.MINUTE);
+        }
+    }
+
     EmbedBuilder getEmbed() {
         return new EmbedBuilder()
                         .setColor(Color.white)
-                        .setTitle(this.name + " (" + this.date.get(Calendar.DATE) + "." + (this.date.get(Calendar.MONTH) + 1) + "." + this.date.get(Calendar.YEAR) + ", " + this.date.get(Calendar.HOUR_OF_DAY) + ":" + this.date.get((Calendar.MINUTE)) + ")")
+                        .setTitle(this.name + " (" + this.date.get(Calendar.DATE) + "." + (this.date.get(Calendar.MONTH) + 1) + "." + this.date.get(Calendar.YEAR) + ", " + this.getTime() + ")")
                         .setDescription("Gesuchte Rollen:\n" + this.tanks + " Tanks " + roleEmote[0] +", " + this.supports + " Healer " + roleEmote[1] + ", " + this.dds + " DDs " + roleEmote[2] + ".");
     }
 
