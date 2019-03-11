@@ -35,6 +35,22 @@ public class Commands implements MessageCreateListener {
         //create Raid command
         if (content.startsWith(prefix + "raid ")) {
             String[] commandargs = content.split(" ");  //1 = name, 2 = date, 3 = time, 4 = amount tanks, 5 = amount supports, 6 = amount DD
+
+            //check for old raid with the same name
+            for (Raid r : raids) {
+                if (r.getName().equals(commandargs[1])) {
+                    //remove command
+                    try {
+                        event.getMessage().delete().join();
+                    } catch (CompletionException e) {
+                        e.printStackTrace();
+                    }
+                    if (event.getMessageAuthor().asUser().isPresent()) {
+                        event.getMessageAuthor().asUser().get().sendMessage("Error: Raidname already in use!");
+                    }
+                    return;
+                }
+            }
             //check for valid ints
             //date
             String[] dateint = commandargs[2].split("\\.");
