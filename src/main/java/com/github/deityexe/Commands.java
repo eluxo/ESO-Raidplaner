@@ -112,28 +112,33 @@ public class Commands implements MessageCreateListener {
                 event.getChannel().sendMessage("Error: Too many roles specified!");
                 return;
             }
-            //create Raid object
-            Raid raid = new Raid(commandargs);
-            //add Raid object to List
-            raids.add(raid);
 
-            //send Raid info Message
-            Message RaidMessage = new MessageBuilder().setEmbed(raid.getEmbed()).send(event.getChannel()).join();
-
-            //remove command
             try {
-                event.getMessage().delete().join();
-            } catch (CompletionException e) {
-                e.printStackTrace();
-            }
+                //create Raid object
+                Raid raid = new Raid(commandargs);
+                //add Raid object to List
+                raids.add(raid);
 
-            //add reactions
-            for (int i = 0; i < 3; i++) {
-                RaidMessage.addReaction(roleEmote[i]);
-            }
+                //send Raid info Message
+                Message RaidMessage = new MessageBuilder().setEmbed(raid.getEmbed()).send(event.getChannel()).join();
 
-            //save Message in Raid Object
-            raid.setRaidmessageID(RaidMessage);
+                //remove command
+                try {
+                    event.getMessage().delete().join();
+                } catch (CompletionException e) {
+                    e.printStackTrace();
+                }
+
+                //add reactions
+                for (int i = 0; i < 3; i++) {
+                    RaidMessage.addReaction(roleEmote[i]);
+                }
+
+                //save Message in Raid Object
+                raid.setRaidmessageID(RaidMessage);
+            } catch (Exception ex) {
+                event.getChannel().sendMessage("Error: Server error! Creation of entry not possible.");
+            }
         }
 
 
