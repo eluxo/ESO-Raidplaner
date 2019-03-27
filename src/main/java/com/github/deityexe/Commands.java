@@ -8,6 +8,9 @@ import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 
@@ -52,6 +55,11 @@ public class Commands implements MessageCreateListener {
      */
     final private List<GuildEvent> guildEvents;
 
+    /**
+     * Stores the help message as read from the resource file.
+     */
+    private final String helpMessage;
+
     private final ICommandEnvironment commandEnvironment = new ICommandEnvironment() {
 
         @Override
@@ -68,6 +76,35 @@ public class Commands implements MessageCreateListener {
     Commands(DiscordApi api, String prefix, List<GuildEvent> events) {
         this.api = api;
         this.guildEvents = events;
+
+        byte[] help = "Error reading help file.".getBytes();
+        try {
+            InputStream inputStream = getClass().getResourceAsStream("/messages/help.msg");
+            help = this.readSteam(inputStream);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        this.helpMessage = new String(help);
+    }
+
+    /**
+     * Reads the given input stream completely and returns the array of characters that have been
+     * read from the stream.
+     *
+     * @param inputStream Stream to be read.
+     * @return Received buffer of characters.
+     * @throws IOException This exception is thrown if reading the file fails.
+     */
+    private byte[] readSteam(InputStream inputStream) throws IOException {
+        byte[] buffer = new byte[512];
+        int n = 0;
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(buffer.length);
+
+        while ((n = inputStream.read(buffer, 0, buffer.length)) > 0) {
+            outputStream.write(buffer, 0, n);
+        }
+
+        return outputStream.toByteArray();
     }
 
     @Override
@@ -138,50 +175,7 @@ public class Commands implements MessageCreateListener {
         }
 
         new MessageBuilder()
-                .append("__**Commands:**__\n\n")
-                .append("Hinweis: Alle Parameter enden beim nächsten Leerzeichen. Soll ein Feld Leerzeichen ")
-                .append("enthalten, muss es in Anführungsstriche gepackt werden.\n\n")
-                .append("__**Event erstellen:**__\n")
-                .append("`")
-                .append(" - !new [Typ] [Name] [Datum] [Uhrzeit] [...]\n")
-                .append("         [Typ]: Art oder Typ des Events (raid, bossrun)\n")
-                .append("         [Name]: Eindeutiger Name des Events\n")
-                .append("         [Datum]: Datum formatiert als TT.MM.JJJJ\n")
-                .append("         [Uhrzeit]: Datum formatiert als HH:MM\n")
-                .append("         [...]: Eventspezifische Parameter\n")
-                .append("`\n\n")
-                .append("_**Raid:**_\n")
-                .append("`")
-                .append(" - !new raid [Name] [Datum] [Uhrzeit] [Anzahl Tanks] [Anzahl Healer] [Anzahl DDs] <Beschreibung>\n")
-                .append("         Beispiel: !new raid vCR+3 11.11.2019 11:11 3 2 7 \"Wir wollen uns nochmal an nCR+3 versuchen.\"\n")
-                .append("`\n\n")
-                .append("_**Worldboss Run:**_\n")
-                .append("`")
-                .append(" - !new bossrun [Name] [Datum] [Uhrzeit] <Beschreibung>\n")
-                .append("         Beispiel: !new bossrun Kargstein 11.11.2019 11:11 3 2 7 \"Gruppenbosse in Kargstein\"\n")
-                .append("`\n\n")
-                .append("Hinweis: Die <Beschreibung> ist optional.\n\n")
-                .append("__**Event beenden**__\n")
-                .append("`")
-                .append(" - !end [Name]\n")
-                .append("         Beispiel: !end vCR+3\n")
-                .append("`\n\n")
-                .append("__**Alle aktiven Events anzeigen**__\n")
-                .append("`")
-                .append(" - !eventlist")
-                .append("`\n\n")
-                .append("__**Angemeldete Teilnehmer anzeigen**__\n")
-                .append("`")
-                .append(" - !userlist [Name]\n")
-                .append("         [Name]: Eindeutiger Name des Events\n")
-                .append("         Beispiel: !userlist vCR+3\n")
-                .append("`\n\n")
-                .append("__**Hilfe anzeigen**__\n")
-                .append("`")
-                .append(" - !help")
-                .append("`\n\n")
-                .append("Der Quellcode für diesen Bot ist unter https://github.com/eluxo/ESO-Raidplaner zu finden.\n")
-                .append("Der Bot basiert auf einem Fork von https://github.com/DeityEXE/ESO-Raidplaner").append(".")
+                .append(this.helpMessage)
                 .send(channel).join();
     }
 

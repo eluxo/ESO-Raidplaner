@@ -4,9 +4,17 @@ plugins {
 }
 
 group 'com.github.deityexe'
-version '1.1'
+version '2.0'
 
 sourceCompatibility = 1.8
+
+sourceSets {
+    main {
+        resources {
+            srcDirs "src/main/res"
+        }
+    }
+}
 
 repositories {
     mavenCentral()
@@ -19,6 +27,8 @@ dependencies {
 }
 
 jar {
+    from "src/main/res"
+
     manifest {
         attributes(
                 'Implementation-Title': project.name,
