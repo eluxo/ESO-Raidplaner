@@ -1,7 +1,6 @@
 package com.github.deityexe.event;
 
 import com.github.deityexe.DeliverableError;
-import com.github.deityexe.command.CommandMessage;
 import com.github.deityexe.command.NewEventCommand;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.emoji.Emoji;
@@ -83,7 +82,7 @@ public abstract class GuildEvent {
         this.eventFolder = eventFolder;
 
         this.setName(command.getName());
-        this.setDate(this.dateFromStrings(command.getDate(), command.getTime()));
+        this.setDateFromString(command.getDate(), command.getTime());
 
         this.uuid = UUID.randomUUID();
         this.properties.setProperty(PROP_UUID, this.uuid.toString());
@@ -126,6 +125,16 @@ public abstract class GuildEvent {
      */
     private void setDate(final Calendar date) {
         this.setLong(PROP_DATE, date.getTimeInMillis());
+    }
+
+    /**
+     * Updates the date based on the given string.
+     *
+     * @param date The new date of the event.
+     * @param time The new time of the event.
+     */
+    public void setDateFromString(final String date, final String time) {
+        this.setDate(this.dateFromStrings(date, time));
     }
 
     /**

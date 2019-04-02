@@ -41,6 +41,11 @@ public class Commands implements MessageCreateListener {
     private static final String COMMAND_ENDEVENT = PREFIX + "end";
 
     /**
+     * Command to modify an existing event.
+     */
+    private static final String COMMAND_MODEVENT = PREFIX + "mod";
+
+    /**
      * Command to show help.
      */
     private static final String COMMAND_HELP = PREFIX + "help";
@@ -84,6 +89,7 @@ public class Commands implements MessageCreateListener {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
         this.helpMessage = new String(help);
     }
 
@@ -129,6 +135,8 @@ public class Commands implements MessageCreateListener {
                 executable = new EventListCommand(command);
             } else if (command.getCommand().equals(COMMAND_ENDEVENT)) {
                 executable = new EndEventCommand(command);
+            } else if (command.getCommand().equals(COMMAND_MODEVENT)) {
+                executable = new ModEventCommand(command);
             } else if (command.getCommand().equals(COMMAND_HELP)) {
                 this.help(event);
             } else {

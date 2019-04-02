@@ -32,6 +32,13 @@ __**Event beenden**__
          Beispiel: !end vCR+3
 `
 
+__**Event bearbeiten**__
+`
+ - !mod [Name] [Datum] [Uhrzeit]
+         Beispiel: !mod vCR+3 01.01.2022 01:22
+`
+
+
 __**Alle aktiven Events anzeigen**__
 `
  - !eventlist
