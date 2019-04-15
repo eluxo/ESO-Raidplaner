@@ -50,6 +50,8 @@ public class ModEventCommand extends CommandMessage {
                 try {
                     logger.info(String.format("modifying message id %d in channel %d", messageId,
                             event.getChannel().getId()));
+                    // make sure that message exists in our channel
+                    event.getChannel().getMessageById(messageId).join();
                     guildEvent.setDateFromString(eventDate, eventTime);
                     Message.edit(api, event.getChannel().getId(), messageId, guildEvent.getEmbed());
                     guildEvent.store();
