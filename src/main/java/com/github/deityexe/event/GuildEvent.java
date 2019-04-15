@@ -776,9 +776,19 @@ public abstract class GuildEvent {
      * @return The event title.
      */
     protected String getTitle() {
+        return String.format("%s: %s (%s, %s)", this.getPrefix(), this.getName(), this.getDate(), this.getTime());
+    }
+
+    /**
+     * Prefix for the event title.
+     *
+     * The prefix should define the type of the event.
+     *
+     * @return The prefix of the event.
+     */
+    protected String getPrefix() {
         final String type = this.getEventType();
-        final String prefix = type.substring(0, 1).toUpperCase() + type.substring(1);
-        return String.format("%s: %s (%s, %s)", prefix, this.getName(), this.getDate(), this.getTime());
+        return type.substring(0, 1).toUpperCase() + type.substring(1);
     }
 
     /**
@@ -798,6 +808,16 @@ public abstract class GuildEvent {
      * @return True, if event has been handled.
      */
     protected abstract boolean onRemoveReaction(ReactionRemoveEvent event, DiscordApi api);
+
+    /**
+     * Getter for a string property.
+     *
+     * @param name The name of the string to get.
+     * @return The string value.
+     */
+    protected String getString(String name) {
+        return this.getProperty(name);
+    }
 
     /**
      * Creator for the given type of event.

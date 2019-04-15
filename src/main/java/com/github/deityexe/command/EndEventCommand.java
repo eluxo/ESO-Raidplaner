@@ -5,8 +5,6 @@ import com.github.deityexe.event.GuildEvent;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.event.message.MessageCreateEvent;
 
-import java.util.Collection;
-import java.util.ListIterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +41,10 @@ public class EndEventCommand extends CommandMessage {
         final MessageCreateEvent event = this.getMessageCreateEvent();
 
         GuildEvent guildEvent = env.eventByName(eventName);
+        if (guildEvent == null) {
+            throw new DeliverableError(String.format("Event %s konnte nicht gefunden werden", eventName));
+        }
+
         if (!guildEvent.delete()) {
             logger.info(String.format("could not delete %s", eventName));
             throw new DeliverableError("Entfernen des Events " + eventName + " fehlgeschlagen.")

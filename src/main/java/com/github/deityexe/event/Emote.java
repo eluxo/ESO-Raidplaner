@@ -23,4 +23,19 @@ public class Emote {
      * Emote representing a neutral participant.
      */
     public static final String EMOTE_PARTICIPANT = "\u2694";
+
+    /**
+     * Emote representing the aldmeri.
+     */
+    public static final String EMOTE_ALDMERI = "\uD83D\uDC9B"; // "\uf09f\u929b";
+
+    /**
+     * Emote representing the daggerfall.
+     */
+    public static final String EMOTE_DAGGERFALL = "\uD83D\uDC99"; // "\uf09f\u9299";
+
+    /**
+     * Emote representing ebonheart.
+     */
+    public static final String EMOTE_EBONHEART = "\u2764"; // "\u00e2\u9da4";
 }

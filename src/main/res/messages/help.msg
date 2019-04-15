@@ -6,7 +6,7 @@ Hinweis: Alle Parameter enden beim nächsten Leerzeichen. Soll ein Feld Leerzeic
 __**Event erstellen:**__
 `
 - !new [Typ] [Name] [Datum] [Uhrzeit] [...]
-         [Typ]: Art oder Typ des Events (raid, bossrun)
+         [Typ]: Art oder Typ des Events (raid, bossrun, pvp)
          [Name]: Eindeutiger Name des Events
          [Datum]: Datum formatiert als TT.MM.JJJJ
          [Uhrzeit]: Datum formatiert als HH:MM
@@ -21,7 +21,13 @@ _**Raid:**_
 _**Worldboss Run:**_
 `
  - !new bossrun [Name] [Datum] [Uhrzeit] <Beschreibung>
-         Beispiel: !new bossrun Kargstein 11.11.2019 11:11 3 2 7 "Gruppenbosse in Kargstein"
+         Beispiel: !new bossrun Kargstein 11.11.2019 11:11 "Gruppenbosse in Kargstein"
+`
+_**PvP:**_
+`
+ - !new pvp [Name] [Datum] [Uhrzeit] [Allianz] <Beschreibung>
+         [Allianz]: ebenerz, aldmeri oder dolchsturz
+         Beispiel: !new pvp Kaiserstadt 11.11.2019 11:11 ebenerz "Dailies und Telvar-Farmrun in der Kaiserstadt"
 `
 
 Hinweis: Die <Beschreibung> ist optional.

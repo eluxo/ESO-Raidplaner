@@ -1,5 +1,6 @@
 package com.github.deityexe.event;
 
+import com.github.deityexe.DeliverableError;
 import com.github.deityexe.command.NewEventCommand;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ public class EventFactory {
         EVENT_CREATOR_LIST = new ArrayList<>();
         EVENT_CREATOR_LIST.add(Raid.CREATOR);
         EVENT_CREATOR_LIST.add(WorlbossRun.CREATOR);
+        EVENT_CREATOR_LIST.add(Pvp.CREATOR);
     }
 
     /**
@@ -40,7 +42,7 @@ public class EventFactory {
             }
         }
 
-        return null;
+        throw new DeliverableError(String.format("Unbekannter Event-Typ: %s", command.getType()));
     }
 
     /**
