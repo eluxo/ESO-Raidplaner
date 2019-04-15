@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Represents a command message.
@@ -18,6 +20,11 @@ import java.util.function.Consumer;
  * attributes of the command.
  */
 public class CommandMessage implements Executable {
+    /**
+     * Class logger.
+     */
+    private static Logger logger = Logger.getLogger(CommandMessage.class.getName());
+
     /**
      * Holds the command string.
      */
@@ -68,6 +75,7 @@ public class CommandMessage implements Executable {
      * @param args The command arguments.
      */
     public CommandMessage(String command, String[] args) {
+        logger.info(String.format("parsed %s with params %s", command, String.join(";", args)));
         this.command = command;
         this.args = args;
     }
@@ -79,6 +87,7 @@ public class CommandMessage implements Executable {
      * @return Instance of the new command object.
      */
     public static CommandMessage parse(String message) {
+        logger.info(String.format("parsing command: %s", message));
         List<String> tokenList = new ArrayList<>();
         Scanner scanner = new Scanner();
         scanner.scan(message, token -> {
@@ -88,7 +97,6 @@ public class CommandMessage implements Executable {
             }
         });
 
-        // final String[] tokens = message.split(" ");
         final String[] tokens = tokenList.toArray(new String[] {});
         final String command = tokens[0];
         final String args[] = Arrays.copyOfRange(tokens, 1, tokens.length);
@@ -175,11 +183,12 @@ public class CommandMessage implements Executable {
      * Removes the original command that has called us.
      */
     protected void removeCommand() {
+        logger.info("remove command message from chat");
         final MessageCreateEvent event = this.getMessageCreateEvent();
         try {
             event.getMessage().delete().join();
         } catch (CompletionException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "failed to remove message from chat", e);
         }
     }
 

@@ -1,12 +1,9 @@
 package com.github.deityexe.event;
 
-import com.github.deityexe.command.CommandMessage;
 import com.github.deityexe.command.NewEventCommand;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * This factory is used to generate different types of events based on their name.
@@ -51,12 +48,12 @@ public class EventFactory {
      *
      * @return List of all available events.
      */
-    public List<GuildEvent> findAllEvents() {
-        List<GuildEvent> rc = new ArrayList<>();
+    public Map<UUID, GuildEvent> findAllEvents() {
+        HashMap<UUID, GuildEvent> rc = new HashMap<>();
         for (GuildEvent.Creator creator: EVENT_CREATOR_LIST) {
             for (UUID uuid: creator.listStoredEvents()) {
                 try {
-                    rc.add(creator.newInstance(uuid));
+                    rc.put(uuid, creator.newInstance(uuid));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

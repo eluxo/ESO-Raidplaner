@@ -11,7 +11,7 @@ import org.javacord.api.listener.message.MessageCreateListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletionException;
 
 public class Commands implements MessageCreateListener {
@@ -58,7 +58,7 @@ public class Commands implements MessageCreateListener {
     /**
      * Reference to the guild events.
      */
-    final private List<GuildEvent> guildEvents;
+    final private Map<UUID, GuildEvent> guildEvents;
 
     /**
      * Stores the help message as read from the resource file.
@@ -68,17 +68,47 @@ public class Commands implements MessageCreateListener {
     private final ICommandEnvironment commandEnvironment = new ICommandEnvironment() {
 
         @Override
-        public List<GuildEvent> getGuildEvents() {
-            return guildEvents;
+        public Collection<GuildEvent> getGuildEvents() {
+            return guildEvents.values();
         }
 
         @Override
         public DiscordApi getDiscordApi() {
             return api;
         }
+
+        @Override
+        public GuildEvent eventByName(final String name) {
+            Collection<GuildEvent> guildEvents = this.getGuildEvents();
+            for (GuildEvent event : guildEvents) {
+                if (event.getName().equals(name)) {
+                    return event;
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        public GuildEvent eventByUuid(final UUID uuid) {
+            return guildEvents.get(uuid);
+        }
+
+        @Override
+        public void addEvent(GuildEvent guildEvent) {
+            if (this.eventByName(guildEvent.getName()) != null) {
+                throw new DeliverableError("Event mit Namen " + guildEvent.getName() + " existiert bereits.");
+            }
+            guildEvents.put(guildEvent.getUuid(), guildEvent);
+        }
+
+        @Override
+        public void removeEvent(GuildEvent guildEvent) {
+            guildEvents.remove(guildEvent.getUuid());
+        }
     };
 
-    Commands(DiscordApi api, String prefix, List<GuildEvent> events) {
+    Commands(DiscordApi api, String prefix, Map<UUID, GuildEvent> events) {
         this.api = api;
         this.guildEvents = events;
 
@@ -185,9 +215,5 @@ public class Commands implements MessageCreateListener {
         new MessageBuilder()
                 .append(this.helpMessage)
                 .send(channel).join();
-    }
-
-    private void newEvent(NewEventCommand newEventCommand, MessageCreateEvent event) {
-
     }
 }

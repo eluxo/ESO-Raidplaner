@@ -45,14 +45,12 @@ public class WorlbossRun extends GuildEvent {
      * @param command The command to create the run on.
      * @throws IOException Thrown in IO errors.
      */
-    public WorlbossRun(NewEventCommand command) throws IOException {
+    protected WorlbossRun(NewEventCommand command) throws IOException {
         super(EVENT_FOLDER_WORLDBOSS_RUN, command);
         this.setAllowedEmotes(ALLOWED_EMOTES);
 
         this.setDescription(command.arg(ARG_DESCRIPTION));
         this.setString(PROP_REGISTERED_PARTICIPANTS, "");
-
-        this.store();
     }
 
     /**
@@ -61,7 +59,7 @@ public class WorlbossRun extends GuildEvent {
      * @param eventId The unique id of the event.
      * @throws IOException Thrown in IO errors.
      */
-    public WorlbossRun(UUID eventId) throws IOException {
+    protected WorlbossRun(UUID eventId) throws IOException {
         super(EVENT_FOLDER_WORLDBOSS_RUN, eventId);
         this.setAllowedEmotes(ALLOWED_EMOTES);
 

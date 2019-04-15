@@ -5,12 +5,17 @@ import com.github.deityexe.event.GuildEvent;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.event.message.MessageCreateEvent;
 
-import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Command to list users on an event.
  */
 public class UserListCommand extends CommandMessage {
+    /**
+     * Class logger.
+     */
+    private static Logger logger = Logger.getLogger(UserListCommand.class.getName());
+
     private static final int ARG_EVENT_NAME = 0;
 
     /**
@@ -28,22 +33,20 @@ public class UserListCommand extends CommandMessage {
     @Override
     public void execute() {
         final ICommandEnvironment env = this.getCommandEnvironment();
-        final List<GuildEvent> guildEvents = env.getGuildEvents();
         final MessageCreateEvent event = this.getMessageCreateEvent();
         final DiscordApi api = env.getDiscordApi();
         final String eventName = this.arg(ARG_EVENT_NAME);
 
-        final GuildEvent guildEvent = this.findEvent(guildEvents, eventName);
+        logger.info(String.format("executing for event %s", eventName));
+
+        final GuildEvent guildEvent = env.eventByName(eventName);
+        if (guildEvent == null) {
+            logger.info("event not found");
+            throw new DeliverableError("Event " + eventName + " konnte nicht gefunden werden.");
+        }
+
         guildEvent.getUserList(api).send(event.getChannel()).join();
         this.removeCommand();
     }
 
-    private GuildEvent findEvent(List<GuildEvent> guildEvents, String eventName) {
-        for (GuildEvent guildEvent : guildEvents) {
-            if (guildEvent.getName().equals(eventName)) {
-                return guildEvent;
-            }
-        }
-        throw new DeliverableError("Event " + eventName + " konnte nicht gefunden werden.");
-    }
 }

@@ -15,8 +15,15 @@ import java.io.*;
 import java.util.*;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class Raid extends GuildEvent {
+    /**
+     * The class logger.
+     */
+    private static final Logger logger = Logger.getLogger(Raid.class.getName());
+
     /**
      * Property listing registered tanks.
      */
@@ -78,7 +85,7 @@ class Raid extends GuildEvent {
      *
      * @param command The command creating the Raid.
      */
-    public Raid(NewEventCommand command) throws IOException, NumberFormatException {
+    protected Raid(NewEventCommand command) throws IOException, NumberFormatException {
         super(EVENT_FOLDER_RAID, command);
         this.setAllowedEmotes(ALLOWED_EMOTES);
 
@@ -87,6 +94,7 @@ class Raid extends GuildEvent {
             this.setSupportsRequired(Integer.parseInt(command.arg(ARG_SUPPORTS_REQUIRED)));
             this.setDdsRequired(Integer.parseInt(command.arg(ARG_DDS_REQUIRED)));
         } catch (NumberFormatException ex) {
+            logger.log(Level.SEVERE, "error converting number", ex);
             throw new DeliverableError("Fehler bei der Zahlenkonvertierung: Anzahl der benötigten Tanks, Heals und DDs "
                     + "müssen Zahlen sein.");
         }
@@ -96,8 +104,6 @@ class Raid extends GuildEvent {
         this.setString(PROP_DDS_REGISTERED, "");
         this.setString(PROP_SUPPORTS_REGISTERED, "");
         this.setString(PROP_SUPPORTS_REGISTERED, "");
-
-        this.store();
     }
 
     /**
@@ -105,7 +111,7 @@ class Raid extends GuildEvent {
      * @param eventId The UUID of the event.
      * @throws IOException Raised when the raid could not be loaded from file.
      */
-    public Raid(UUID eventId) throws IOException {
+    protected Raid(UUID eventId) throws IOException {
         super(EVENT_FOLDER_RAID, eventId);
         this.setAllowedEmotes(ALLOWED_EMOTES);
     }

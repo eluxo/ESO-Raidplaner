@@ -7,6 +7,7 @@ import org.javacord.api.entity.emoji.Emoji;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.reaction.ReactionAddEvent;
 import org.javacord.api.event.message.reaction.ReactionRemoveEvent;
@@ -17,11 +18,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Shared event class providing the basic file handling interfaces to load and store event configurations.
  */
 public abstract class GuildEvent {
+    /**
+     * The class logger.
+     */
+    private static final Logger logger = Logger.getLogger(GuildEvent.class.getName());
+
     /**
      * Offset for child class arguments.
      */
@@ -46,20 +54,26 @@ public abstract class GuildEvent {
      * ID of the message.
      */
     private static final String PROP_MESSAGE_ID = "messageId";
+
     /**
      * Property holding the optional event description.
      */
     private static final String PROP_DESCRIPTION = "eventDescription";
 
     /**
-     * UUID of the event.
+     * Server the message has been posted on.
      */
-    private final UUID uuid;
+    private static final String PROP_SERVER_ID = "serverId";
 
     /**
-     * The file the event has been stored in.
+     * Channel the message has been posted on.
      */
-    private final File eventFolder;
+    private static final String PROP_CHANNEL_ID = "channelId";
+
+    /**
+     * Class shall be set modified whenever something has changed.
+     */
+    private boolean modified = true;
 
     /**
      * The event properties.
@@ -67,9 +81,35 @@ public abstract class GuildEvent {
     private final Properties properties = new Properties();
 
     /**
+     * File object on the events file.
+     */
+    private final File eventFile;
+
+    /**
      * List of allowed emotes.
      */
     private String allowedEmotes[] = new String[] {};
+
+    /**
+     * Loads an event from the folder of event.
+     *
+     * @param eventFolder The folder to load the event from.
+     * @param eventId The id of the event.
+     */
+    public GuildEvent(final File eventFolder, final UUID eventId) throws IOException {
+        logger.info(String.format("loading %s from %s", this.getEventType(), eventId.toString()));
+        this.eventFile = fileFromUuid(eventFolder, eventId);
+        this.load();
+    }
+
+    /**
+     * Getter for the type of the event.
+     *
+     * @return Type name of the event.
+     */
+    public String getTypeName() {
+        return this.getEventType();
+    }
 
     /**
      * Constructor.
@@ -79,15 +119,24 @@ public abstract class GuildEvent {
      * @throws IOException Thrown when the the event cannot be saved.
      */
     public GuildEvent(final File eventFolder, NewEventCommand command) throws IOException {
-        this.eventFolder = eventFolder;
+        logger.info(String.format("creating %s named %s from command", command.getType(), command.getName()));
+        final UUID uuid = UUID.randomUUID();
+        this.setProperty(PROP_UUID, uuid.toString());
 
         this.setName(command.getName());
         this.setDateFromString(command.getDate(), command.getTime());
+        this.eventFile = fileFromUuid(eventFolder, uuid);
+    }
 
-        this.uuid = UUID.randomUUID();
-        this.properties.setProperty(PROP_UUID, this.uuid.toString());
-
-        this.store();
+    /**
+     * Constructs the file name from the given UUID.
+     *
+     * @param eventFolder Folder for this type of event.
+     * @param uuid The UUID to create the file name on.
+     * @return The file object for the given UUID.
+     */
+    private static File fileFromUuid(final File eventFolder, final UUID uuid) {
+        return new File(eventFolder, uuid.toString());
     }
 
     /**
@@ -98,24 +147,12 @@ public abstract class GuildEvent {
     protected abstract String getEventType();
 
     /**
-     * Loads an event from the folder of event.
-     *
-     * @param eventFolder The folder to load the event from.
-     * @param eventId The id of the event.
-     */
-    public GuildEvent(final File eventFolder, final UUID eventId) throws IOException {
-        this.eventFolder = eventFolder;
-        this.uuid = eventId;
-        this.load();
-    }
-
-    /**
      * Sets the event name.
      *
      * @param name The event name.
      */
     private void setName(final String name) {
-        this.properties.setProperty(PROP_NAME, name);
+        this.setProperty(PROP_NAME, name);
     }
 
     /**
@@ -138,21 +175,12 @@ public abstract class GuildEvent {
     }
 
     /**
-     * Getter for the folder of all event.
-     *
-     * @return The folder that stores all the event.
-     */
-    protected File getEventFolder() {
-        return eventFolder;
-    }
-
-    /**
      * Getter for the event configuration file.
      *
      * @return The event configuration file.
      */
     protected File getEventFile() {
-        return new File(eventFolder, this.uuid.toString());
+        return this.eventFile;
     }
 
     /**
@@ -164,7 +192,7 @@ public abstract class GuildEvent {
      */
     protected long getLong(final String name, final long fallback) {
         try {
-            return Long.parseLong(this.properties.getProperty(name, Long.toString(fallback)));
+            return Long.parseLong(this.getProperty(name, Long.toString(fallback)));
         } catch (NumberFormatException e) {
             e.printStackTrace();
             return fallback;
@@ -178,7 +206,7 @@ public abstract class GuildEvent {
      * @param value The value to be stored.
      */
     protected void setLong(final String name, final long value) {
-        this.properties.setProperty(name, Long.toString(value));
+        this.setProperty(name, Long.toString(value));
     }
 
     /**
@@ -190,7 +218,7 @@ public abstract class GuildEvent {
      */
     protected int getInt(final String name, final int fallback) {
         try {
-            return Integer.parseInt(this.properties.getProperty(name, Integer.toString(fallback)));
+            return Integer.parseInt(this.getProperty(name, Integer.toString(fallback)));
         } catch (NumberFormatException e) {
             e.printStackTrace();
             return fallback;
@@ -204,7 +232,7 @@ public abstract class GuildEvent {
      * @param value The value.
      */
     protected void setInt(final String name, final int value) {
-        this.properties.setProperty(name, Integer.toString(value));
+        this.setProperty(name, Integer.toString(value));
     }
 
     /**
@@ -214,7 +242,7 @@ public abstract class GuildEvent {
      * @return The property value.
      */
     protected List<Long> getLongList(final String name) {
-        final String value = this.properties.getProperty(name);
+        final String value = this.getProperty(name);
         final List<Long> rc = new ArrayList<>();
         if (value.isEmpty()) {
             return rc;
@@ -237,7 +265,7 @@ public abstract class GuildEvent {
         for (final Long entry: entries) {
             stringList.add(entry.toString());
         }
-        this.properties.setProperty(name, String.join("#", stringList));
+        this.setProperty(name, String.join("#", stringList));
     }
 
 
@@ -248,7 +276,7 @@ public abstract class GuildEvent {
      * @param value The value to be set.
      */
     protected void setString(final String name, final String value) {
-        this.properties.setProperty(name, value);
+        this.setProperty(name, value);
     }
 
     /**
@@ -257,7 +285,56 @@ public abstract class GuildEvent {
      * @return Name of the event.
      */
     public String getName() {
-        return this.properties.getProperty(PROP_NAME);
+        return this.getProperty(PROP_NAME);
+    }
+
+    /**
+     * Returns a property value.
+     *
+     * @param name The properties name.
+     * @return The properties value.
+     */
+    private String getProperty(final String name) {
+        return this.properties.getProperty(name);
+    }
+
+    /**
+     * Returns a property value.
+     *
+     * @param name The properties name.
+     * @param fallback The default value.
+     * @return The properties value.
+     */
+    private String getProperty(String name, String fallback) {
+        return this.properties.getProperty(name, fallback);
+    }
+
+    /**
+     * Sets a property value.
+     *
+     * @param name The name of the value to be set.
+     * @param value The value to be stored.
+     */
+    private void setProperty(String name, String value) {
+        logger.info(String.format("%s: setting %s -> %s", this.getUuid(), name, value));
+        if (!this.modified) {
+            logger.info(String.format("%s: marking %s modified", this.getUuid(), this.getName()));
+            this.modified = true;
+        }
+        this.properties.setProperty(name, value);
+    }
+
+    /**
+     * Getter for the UUID of the event.
+     *
+     * @return UUID of the event.
+     */
+    public UUID getUuid() {
+        final String uuid = this.getProperty(PROP_UUID);
+        if (uuid == null) {
+            return UUID.fromString("00000000-0000-0000-0000-000000000000");
+        }
+        return UUID.fromString(this.getProperty(PROP_UUID));
     }
 
     /**
@@ -287,9 +364,17 @@ public abstract class GuildEvent {
      * @throws IOException Thrown whan writing fails.
      */
     public void store() throws IOException {
+        if (!this.modified) {
+            logger.info(String.format("%s: data has not been modified. nothing to save here.", this.getUuid()));
+            return;
+        }
+
         this.createEventFolder();
         FileOutputStream fos = new FileOutputStream(this.getEventFile());
         this.properties.store(fos, "");
+
+        this.modified = false;
+        logger.info(String.format("%s: marking %s unmodified", this.getUuid(), this.getName()));
     }
 
     /**
@@ -313,6 +398,42 @@ public abstract class GuildEvent {
     }
 
     /**
+     * Stores the ID of the server the message has been posted on.
+     *
+     * @param serverId Id of the server the message has been posted on.
+     */
+    public void setServerId(final Long serverId) {
+        this.setLong(PROP_SERVER_ID, serverId);
+    }
+
+    /**
+     * Setter for the ID where the message has been created on.
+     *
+     * @param channelId Id of the channel of the message.
+     */
+    public void setChannelId(final Long channelId) {
+        this.setLong(PROP_CHANNEL_ID, channelId);
+    }
+
+    /**
+     * Getter for the server ID.
+     *
+     * @return The server ID or zero, if undefined.
+     */
+    public Long getServerId() {
+        return this.getLong(PROP_SERVER_ID, 0);
+    }
+
+    /**
+     * Getter for the channel ID.
+     *
+     * @return The channel ID.
+     */
+    public Long getChannelId() {
+        return this.getLong(PROP_CHANNEL_ID, 0);
+    }
+
+    /**
      * Getter for the message ID.
      *
      * The message ID is the frontend part of the event presented to the user.
@@ -329,8 +450,9 @@ public abstract class GuildEvent {
      * @throws IOException Thrown whenever the folder could not be created.
      */
     protected void createEventFolder() throws IOException {
-        if(!this.eventFolder.exists()) {
-            if (!this.eventFolder.mkdir()) {
+        final File eventFolder = this.eventFile.getParentFile();
+        if(!eventFolder.exists()) {
+            if (!eventFolder.mkdir()) {
                 throw new IOException("Creating the output folder has failed.");
             }
         }
@@ -346,6 +468,7 @@ public abstract class GuildEvent {
     protected void registerParticipant(final User user, final String list) throws IOException {
         final List<Long> participants = this.getLongList(list);
         final Long userId = user.getId();
+        logger.info(String.format("%s: register %d as on %s", this.getUuid(), userId, list));
         if (!participants.contains(userId)) {
             participants.add(userId);
             this.setLongList(list, participants);
@@ -363,6 +486,7 @@ public abstract class GuildEvent {
     protected void unregisterParticipant(final User user, final String list) throws IOException {
         final List<Long> participants = this.getLongList(list);
         final Long userId = user.getId();
+        logger.info(String.format("%s: unregister %d as on %s", this.getUuid(), userId, list));
         if (participants.contains(userId)) {
             participants.remove(userId);
             this.setLongList(list, participants);
@@ -382,11 +506,13 @@ public abstract class GuildEvent {
 
         String[] dateParts = date.split("\\.");
         if (dateParts.length < 3) {
+            logger.log(Level.SEVERE, String.format("invalid date: %s", date));
             throw new DeliverableError("Ungültiges Datum gefunden. Bitte TT.MM.JJJJ benutzen.");
         }
 
         String[] timeParts = time.split(":");
         if (timeParts.length < 2) {
+            logger.log(Level.SEVERE, String.format("invalid time: %s", time));
             throw new DeliverableError("Ungültige Zeit gefunden. Bitte HH:MM oder HH:MM:SS benutzen.");
         }
 
@@ -422,7 +548,7 @@ public abstract class GuildEvent {
      * @return Description of the event.
      */
     protected String getDescription() {
-        final String description = this.properties.getProperty(PROP_DESCRIPTION, "");
+        final String description = this.getProperty(PROP_DESCRIPTION, "");
         if (description.isEmpty()) {
             return "";
         }
@@ -566,14 +692,58 @@ public abstract class GuildEvent {
      * @param api The discord api to access the remote service.
      */
     protected void renderUserList(String name, MessageBuilder messageBuilder, DiscordApi api) {
-        for (long usrID : this.getLongList(name)) {
+        for (long userId : this.getLongList(name)) {
+                final String nickname = this.resolveName(userId, api);
+                messageBuilder.append(String.format("- %s\n", nickname));
+        }
+    }
+
+    private String resolveName(long userId, DiscordApi api) {
+        try {
+            final User user = api.getUserById(userId).get();
+            do {
+                final long serverId = this.getServerId();
+                if (serverId == 0) {
+                    logger.info("no server id found");
+                    continue;
+                }
+
+                Optional<Server> optionalServer = api.getServerById(serverId);
+                if (!optionalServer.isPresent()) {
+                    logger.info(String.format("no server with id %d found", serverId));
+                    continue;
+                }
+
+                Optional<String> optionalNicknname = optionalServer.get().getNickname(user);
+                if (optionalNicknname.isPresent()) {
+                    return optionalNicknname.get();
+                }
+                logger.info(String.format("no nickname present for %d", userId));
+            } while(false);
+            return user.getName();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, String.format("error retrieving name for %d", userId), e);
+            return "*[unknown]*";
+        }
+    }
+
+    /**
+     *
+     * @param api
+     * @param userId
+     * @return
+     */
+    protected String getUserNick(DiscordApi api, long userId) {
+        final long serverId = this.getServerId();
+        if (serverId == 0) {
             try {
-                messageBuilder.append("- " + api.getUserById(usrID).get().getName() + "\n");
+                return api.getUserById(userId).get().getName();
             } catch (Exception e) {
-                messageBuilder.append("- *[deleted]*\n");
-                e.printStackTrace();
+                logger.log(Level.SEVERE, String.format("%s: failed to retrieve user id", this.getUuid()), e);
             }
         }
+
+        return null;
     }
 
     /**

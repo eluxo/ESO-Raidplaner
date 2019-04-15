@@ -9,12 +9,17 @@ import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.event.message.MessageCreateEvent;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Command to create a new event.
  */
 public class NewEventCommand extends CommandMessage {
+    /**
+     * Class logger.
+     */
+    private static final Logger logger = Logger.getLogger(NewEventCommand.class.getName());
+
     /**
      * Minimum number of required arguments for this type of command.
      */
@@ -75,34 +80,43 @@ public class NewEventCommand extends CommandMessage {
 
     @Override
     public void execute() {
+        final String eventName = this.getName();
+        logger.info(String.format("executing for %s", eventName));
+
         final ICommandEnvironment env = this.getCommandEnvironment();
-        final List<GuildEvent> guildEvents = env.getGuildEvents();
         final MessageCreateEvent event = this.getMessageCreateEvent();
         final DiscordApi api = env.getDiscordApi();
 
-        final String eventType = this.getType();
-        final String eventName = this.getName();
-
-        for (GuildEvent guildEvent : guildEvents) {
-            if (guildEvent.getName().equals(eventName)) {
-                this.removeCommand();
-                throw new DeliverableError("Event mit dem Namen " + eventName + " existiert bereits.");
-            }
+        if (env.eventByName(eventName) != null) {
+            logger.info(String.format("event %s already exists", eventName));
+            this.removeCommand();
+            throw new DeliverableError("Event mit dem Namen " + eventName + " existiert bereits.");
         }
 
         final String args[] = Arrays.copyOfRange(this.getArgs(), 1, this.getArgs().length);
         try {
+            logger.info(String.format("creating event %s", eventName));
             final GuildEvent guildEvent = (new EventFactory()).createEvent(this);
-            guildEvents.add(guildEvent);
             final Message RaidMessage = new MessageBuilder()
                     .setEmbed(guildEvent.getEmbed())
                     .send(event.getChannel())
                     .join();
 
-            this.removeCommand();
+            logger.info("adding reaction symbols to event");
             guildEvent.addReactions(RaidMessage);
+
+            logger.info("retrieve ID values");
             guildEvent.setMessageId(RaidMessage.getId());
+            guildEvent.setChannelId(RaidMessage.getChannel().getId());
+            RaidMessage.getServer().ifPresent(server -> {
+                guildEvent.setServerId(server.getId());
+            });
+
+            logger.info(String.format("make sure that %s is stored", eventName));
             guildEvent.store();
+            env.addEvent(guildEvent);
+
+            this.removeCommand();
         } catch (DeliverableError error) {
             throw error;
         } catch (Exception ex) {

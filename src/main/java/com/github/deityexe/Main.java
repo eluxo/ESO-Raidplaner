@@ -5,11 +5,19 @@ import com.github.deityexe.event.EventFactory;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 
-import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.logging.Logger;
 
 
 public class Main {
+    /**
+     * Class logger.
+     */
+    private static Logger logger = Logger.getLogger(Main.class.getName());
+
     public static void main(String[] args) {
+        logger.info("entering main");
         Properties properties = new Properties();
         String prefix = properties.getPrefix();
 
@@ -19,14 +27,19 @@ public class Main {
             return;
         }
 
-        List<GuildEvent> guildEvents = (new EventFactory()).findAllEvents();
+        logger.info("loading stored events");
+        Map<UUID, GuildEvent> guildEvents = (new EventFactory()).findAllEvents();
+
+        logger.info("connecting to discord");
         DiscordApi api = new DiscordApiBuilder().setToken(token).login().join();
 
+        logger.info("create and connect listeners");
         api.addMessageCreateListener(new Commands(api, prefix, guildEvents));
 
         api.addReactionAddListener(event -> {
             try {
-                for (GuildEvent guildEvent : guildEvents) {
+                logger.info(String.format("reaction added on message"));
+                for (GuildEvent guildEvent : guildEvents.values()) {
                     guildEvent.dispatchEvent(event, api);
                 }
             } catch (DeliverableError error) {
@@ -38,7 +51,8 @@ public class Main {
 
         api.addReactionRemoveListener(event -> {
             try {
-                for (GuildEvent guildEvent : guildEvents) {
+                logger.info(String.format("reaction removed on message"));
+                for (GuildEvent guildEvent : guildEvents.values()) {
                     guildEvent.dispatchEvent(event, api);
                 }
             } catch (DeliverableError error) {
