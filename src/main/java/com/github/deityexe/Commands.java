@@ -2,9 +2,14 @@ package com.github.deityexe;
 
 import com.github.deityexe.command.*;
 import com.github.deityexe.event.GuildEvent;
+import com.github.deityexe.util.BotConfig;
 import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.MessageBuilder;
+import org.javacord.api.entity.permission.Role;
+import org.javacord.api.entity.server.Server;
+import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
@@ -13,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CompletionException;
+import java.util.logging.Logger;
 
 public class Commands implements MessageCreateListener {
     /**
@@ -51,6 +57,11 @@ public class Commands implements MessageCreateListener {
     private static final String COMMAND_HELP = PREFIX + "help";
 
     /**
+     * Command to generate the MOTD.
+     */
+    private static final String COMMAND_MOTD = PREFIX + "motd";
+
+    /**
      * Reference to the discord API.
      */
     final private DiscordApi api;
@@ -66,6 +77,15 @@ public class Commands implements MessageCreateListener {
     private final String helpMessage;
 
     private final ICommandEnvironment commandEnvironment = new ICommandEnvironment() {
+        /**
+         * Instance of the server running the bot.
+         */
+        private Server server;
+
+        /**
+         * Instance of the channel object for the bot.
+         */
+        private Channel channel;
 
         @Override
         public Collection<GuildEvent> getGuildEvents() {
@@ -106,6 +126,59 @@ public class Commands implements MessageCreateListener {
         public void removeEvent(GuildEvent guildEvent) {
             guildEvents.remove(guildEvent.getUuid());
         }
+
+        @Override
+        public Server getServer() {
+            if (this.server == null) {
+                final long serverId = BotConfig.getInstance().getServerId();
+                this.server = this.getDiscordApi().getServerById(serverId).get();
+            }
+            return this.server;
+        }
+
+        @Override
+        public Channel getChannel() {
+            if (this.channel == null) {
+                final Server server = this.getServer();
+                final long channelId = BotConfig.getInstance().getChannelId();
+                this.channel = server.getChannelById(channelId).get();
+            }
+            return this.channel;
+        }
+
+        @Override
+        public TextChannel getTextChannel() {
+            return this.getChannel().asTextChannel().get();
+        }
+
+        @Override
+        public boolean isManager(final User user) {
+            if (user == null || user.getId() == 0) {
+                return false;
+            }
+
+            if (this.isAdmin(user)) {
+                return true;
+            }
+
+            final List<Role> roles = user.getRoles(this.getServer());
+            final long managerRoleId = BotConfig.getInstance().getManagerRoleId();
+            for (final Role role: roles) {
+                if (role.getId() == managerRoleId) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean isAdmin(final User user) {
+            if (user == null || user.getId() == 0) {
+                return false;
+            }
+
+            return (BotConfig.getInstance().getAdminId() == user.getId());
+        }
     };
 
     Commands(DiscordApi api, String prefix, Map<UUID, GuildEvent> events) {
@@ -145,9 +218,16 @@ public class Commands implements MessageCreateListener {
 
     @Override
     public void onMessageCreate(MessageCreateEvent event) {
-
+        Logger logger = Logger.getLogger(Commands.class.getName());
         final String content = event.getMessage().getContent();
+
         if (!content.startsWith(PREFIX)) {
+            return;
+        }
+
+        final User user = event.getMessage().getUserAuthor().get();
+        if (!this.commandEnvironment.isManager(user)) {
+            logger.warning("user does not have bot permissions.");
             return;
         }
 
@@ -167,6 +247,8 @@ public class Commands implements MessageCreateListener {
                 executable = new EndEventCommand(command);
             } else if (command.getCommand().equals(COMMAND_MODEVENT)) {
                 executable = new ModEventCommand(command);
+            } else if (command.getCommand().equals(COMMAND_MOTD)) {
+                executable = new GenerateMOTD(command);
             } else if (command.getCommand().equals(COMMAND_HELP)) {
                 this.help(event);
             } else {

@@ -38,4 +38,9 @@ public class Emote {
      * Emote representing ebonheart.
      */
     public static final String EMOTE_EBONHEART = "\u2764"; // "\u00e2\u9da4";
+
+    /**
+     * Emote for reservists.
+     */
+    public static final String EMOTE_RESERVIST = "\uD83D\uDE91";
 }

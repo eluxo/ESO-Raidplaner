@@ -2,8 +2,11 @@ package com.github.deityexe.command;
 
 import com.github.deityexe.DeliverableError;
 import com.github.deityexe.event.GuildEvent;
+import com.github.deityexe.util.BotConfig;
 import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
 
 import java.util.Collection;
@@ -50,10 +53,12 @@ public class ModEventCommand extends CommandMessage {
                 try {
                     logger.info(String.format("modifying message id %d in channel %d", messageId,
                             event.getChannel().getId()));
+                    final Server server = this.getCommandEnvironment().getServer();
+                    final TextChannel channel = server.getTextChannelById(guildEvent.getChannelId()).get();
                     // make sure that message exists in our channel
-                    event.getChannel().getMessageById(messageId).join();
+                    channel.getMessageById(messageId).join();
                     guildEvent.setDateFromString(eventDate, eventTime);
-                    Message.edit(api, event.getChannel().getId(), messageId, guildEvent.getEmbed());
+                    Message.edit(api, channel.getId(), messageId, guildEvent.getEmbed()).join();
                     guildEvent.store();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "failed to update event", e);

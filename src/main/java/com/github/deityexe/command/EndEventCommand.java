@@ -3,6 +3,8 @@ package com.github.deityexe.command;
 import com.github.deityexe.DeliverableError;
 import com.github.deityexe.event.GuildEvent;
 import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
 
 import java.util.logging.Level;
@@ -57,7 +59,9 @@ public class EndEventCommand extends CommandMessage {
 
         if (event.getMessageAuthor().asUser().isPresent()) {
             try {
-                event.getChannel().sendMessage("__**Anmeldung f\u00fcr \"" + guildEvent.getName() + "\" wurde geschlossen!**__");
+                final Server server = this.getCommandEnvironment().getServer();
+                final TextChannel channel = server.getTextChannelById(guildEvent.getChannelId()).get();
+                channel.sendMessage("__**Anmeldung f\u00fcr \"" + guildEvent.getName() + "\" wurde geschlossen!**__");
                 guildEvent.getUserList(api).send(event.getMessageAuthor().asUser().get().openPrivateChannel().get());
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "failed sending message to user", e);

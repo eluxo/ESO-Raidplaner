@@ -50,6 +50,11 @@ class Raid extends GuildEvent {
     private static final String PROP_SUPPORTS_REGISTERED = "supportsRegistered";
 
     /**
+     * Property listing registered reservists.
+     */
+    private static final String PROP_RESERVISTS_REGISTERED = "reservistsRegistered";
+
+    /**
      * Property holding the total number of required supports.
      */
     private static final String PROP_SUPPORTS_REQUIRED = "supportsRequired";
@@ -68,7 +73,7 @@ class Raid extends GuildEvent {
      * List of emotes allowed on the message.
      */
     private static final String ALLOWED_EMOTES[] = new String[] { Emote.EMOTE_DD, Emote.EMOTE_TANK,
-            Emote.EMOTE_SUPPORT };
+            Emote.EMOTE_SUPPORT, Emote.EMOTE_RESERVIST };
 
     private static final int ARG_TANKS_REQUIRED =    ARG_OFFSET + 1;
     private static final int ARG_SUPPORTS_REQUIRED = ARG_OFFSET + 2;
@@ -104,6 +109,7 @@ class Raid extends GuildEvent {
         this.setString(PROP_DDS_REGISTERED, "");
         this.setString(PROP_SUPPORTS_REGISTERED, "");
         this.setString(PROP_SUPPORTS_REGISTERED, "");
+        this.setString(PROP_RESERVISTS_REGISTERED, "");
     }
 
     /**
@@ -153,7 +159,6 @@ class Raid extends GuildEvent {
         this.registerParticipant(user, PROP_TANKS_REGISTERED);
     }
 
-
     /**
      * Unregister the current user as tank.
      *
@@ -164,17 +169,15 @@ class Raid extends GuildEvent {
         this.unregisterParticipant(user, PROP_TANKS_REGISTERED);
     }
 
-
     /**
-     * Registers the current user as tank.
+     * Registers the current user as support.
      *
-     * @param user The user to be registered as tank.
+     * @param user The user to be registered as support.
      * @throws IOException Thrown, when updating the event fails.
      */
     public void registerSupport(final User user) throws IOException {
         this.registerParticipant(user, PROP_SUPPORTS_REGISTERED);
     }
-
 
     /**
      * Unregister the current user as support.
@@ -187,6 +190,26 @@ class Raid extends GuildEvent {
     }
 
     /**
+     * Registers the current user as reservist.
+     *
+     * @param user The user to be registered as reservist.
+     * @throws IOException Thrown, when updating the event fails.
+     */
+    public void registerReservist(final User user) throws IOException {
+        this.registerParticipant(user, PROP_RESERVISTS_REGISTERED);
+    }
+
+    /**
+     * Unregister the current user as reservist.
+     *
+     * @param user The user to be unreghistered as reservist.
+     * @throws IOException Thrown, when updating the event fails.
+     */
+    public void removeReservist(final User user) throws IOException {
+        this.unregisterParticipant(user, PROP_RESERVISTS_REGISTERED);
+    }
+
+    /**
      * Registers the current user as DD.
      *
      * @param user The user to be registered as DD.
@@ -195,7 +218,6 @@ class Raid extends GuildEvent {
     public void registerDD(final User user) throws IOException {
         this.registerParticipant(user, PROP_DDS_REGISTERED);
     }
-
 
     /**
      * Unregister the current user as DD.
@@ -218,10 +240,11 @@ class Raid extends GuildEvent {
      * @return EmbedBuilder rendering the frame.
      */
     public EmbedBuilder getEmbed() {
-        final String description = this.getDescription() + String.format("Gesuchte Rollen:\n"
-                        + "%d Tanks "  + Emote.EMOTE_TANK +", "
-                        + "%d Healer " + Emote.EMOTE_SUPPORT + ", "
-                        + "%d DDs "    + Emote.EMOTE_DD,
+        final String description = this.getDescription() + String.format("\n Gesuchte Rollen:\n"
+                        + Emote.EMOTE_TANK + " Tanks\t%d\n"
+                        + Emote.EMOTE_SUPPORT + " Healer\t%d\n"
+                        + Emote.EMOTE_DD + " DDs\t%d\n"
+                        + Emote.EMOTE_RESERVIST + " Springer",
                 this.getLong(PROP_TANKS_REQUIRED, 0),
                 this.getLong(PROP_SUPPORTS_REQUIRED, 0),
                 this.getLong(PROP_DDS_REQUIRED, 0));
@@ -247,13 +270,18 @@ class Raid extends GuildEvent {
         messageBuilder.appendNewLine();
         messageBuilder.append("**DDs " + Emote.EMOTE_DD + "**\n");
         this.renderUserList(PROP_DDS_REGISTERED, messageBuilder, api);
+
+        messageBuilder.appendNewLine();
+        messageBuilder.append("**Springer " + Emote.EMOTE_RESERVIST + "**\n");
+        this.renderUserList(PROP_RESERVISTS_REGISTERED, messageBuilder, api);
+
         return  messageBuilder;
     }
 
 
     @Override
     public void addReactions(final Message message) {
-        message.addReactions(Emote.EMOTE_TANK, Emote.EMOTE_SUPPORT, Emote.EMOTE_DD);
+        message.addReactions(Emote.EMOTE_TANK, Emote.EMOTE_SUPPORT, Emote.EMOTE_DD, Emote.EMOTE_RESERVIST);
     }
 
     @Override
@@ -268,6 +296,9 @@ class Raid extends GuildEvent {
             } else if (event.getEmoji().equalsEmoji(Emote.EMOTE_DD)) {
                 this.registerDD(event.getUser());
                 event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + this.getName() + "\" als Rolle \"DD " + Emote.EMOTE_DD + "\" angemeldet!");
+            } else if (event.getEmoji().equalsEmoji(Emote.EMOTE_RESERVIST)) {
+                this.registerReservist(event.getUser());
+                event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + this.getName() + "\" als Rolle \"Reservist " + Emote.EMOTE_RESERVIST + "\" angemeldet!");
             }
         } catch (DeliverableError error) {
             throw error;
@@ -293,6 +324,9 @@ class Raid extends GuildEvent {
             } else if (event.getEmoji().equalsEmoji(Emote.EMOTE_DD)) {
                 this.removeDD(event.getUser());
                 event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + this.getName() + "\" als Rolle \"DD " + Emote.EMOTE_DD + "\" __**abgemeldet**__!");
+            } else if (event.getEmoji().equalsEmoji(Emote.EMOTE_RESERVIST)) {
+                this.removeReservist(event.getUser());
+                event.getUser().sendMessage("Du hast dich erfolgreich f\u00fcr \"" + this.getName() + "\" als Rolle \"Reservist " + Emote.EMOTE_RESERVIST + "\" __**abgemeldet**__!");
             }
         } catch (DeliverableError error) {
             throw error;

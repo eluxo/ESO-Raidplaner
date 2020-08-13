@@ -4,6 +4,8 @@ import com.github.deityexe.DeliverableError;
 import com.github.deityexe.event.EventFactory;
 import com.github.deityexe.event.GuildEvent;
 import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.channel.Channel;
+import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.event.message.MessageCreateEvent;
@@ -23,12 +25,13 @@ public class NewEventCommand extends CommandMessage {
     /**
      * Minimum number of required arguments for this type of command.
      */
-    public static final int MINIMUM_ARGUMENT_COUNT = 4;
+    public static final int MINIMUM_ARGUMENT_COUNT = 5;
 
     private static final int ARG_EVENT_TYPE = 0;
     private static final int ARG_EVENT_NAME = 1;
     private static final int ARG_DATE = 2;
     private static final int ARG_TIME = 3;
+    private static final int ARG_ORGANIZER = 4;
 
     /**
      * Constructor.
@@ -38,7 +41,7 @@ public class NewEventCommand extends CommandMessage {
     public NewEventCommand(CommandMessage command) {
         super(command);
         if (this.getArgs().length < MINIMUM_ARGUMENT_COUNT) {
-            throw new DeliverableError("Es wurden zu wenig parameter angegeben.");
+            throw new DeliverableError("Es wurden zu wenig Parameter angegeben.");
         }
     }
 
@@ -78,6 +81,15 @@ public class NewEventCommand extends CommandMessage {
         return this.arg(ARG_TIME);
     }
 
+    /**
+     * Getter for the account name of the person organizing the event.
+     *
+     * @return Account name of the person organizing the raid.
+     */
+    public String getOrganizer() {
+        return this.arg(ARG_ORGANIZER);
+    }
+
     @Override
     public void execute() {
         final String eventName = this.getName();
@@ -96,10 +108,11 @@ public class NewEventCommand extends CommandMessage {
         final String args[] = Arrays.copyOfRange(this.getArgs(), 1, this.getArgs().length);
         try {
             logger.info(String.format("creating event %s", eventName));
+            final TextChannel eventChannel = this.getCommandEnvironment().getTextChannel();
             final GuildEvent guildEvent = (new EventFactory()).createEvent(this);
             final Message RaidMessage = new MessageBuilder()
                     .setEmbed(guildEvent.getEmbed())
-                    .send(event.getChannel())
+                    .send(eventChannel)
                     .join();
 
             logger.info("adding reaction symbols to event");

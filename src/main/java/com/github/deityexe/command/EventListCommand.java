@@ -5,8 +5,6 @@ import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.event.message.MessageCreateEvent;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -39,11 +37,18 @@ public class EventListCommand extends CommandMessage {
             event.getChannel().sendMessage("**Es gibt noch keine aktiven Events!**");
         } else {
             logger.info(String.format("sending %d events to user", guildEvents.size()));
-            MessageBuilder msgbuilder = new MessageBuilder().append("**Alle aktiven Events:**\n");
+            MessageBuilder msgbuilder = new MessageBuilder().append("**Alle aktiven Events:**```\n");
             for (GuildEvent guildEvent : guildEvents) {
-                msgbuilder.append(String.format("- %s [%s] (%s, %s)\n", guildEvent.getName(),
-                        guildEvent.getTypeName(), guildEvent.getDate(), guildEvent.getTime()));
+                String organizer = guildEvent.getOrganizer();
+                if (organizer == null) {
+                    organizer = "";
+                } else {
+                    organizer = String.format(" (%s)", organizer);
+                }
+                msgbuilder.append(String.format("- %s [%s] (%s, %s)%s\n", guildEvent.getName(),
+                        guildEvent.getTypeName(), guildEvent.getDate(), guildEvent.getTime(), organizer));
             }
+            msgbuilder.append("```");
             msgbuilder.send(event.getChannel()).join();
         }
 

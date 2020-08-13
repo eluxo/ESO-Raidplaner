@@ -2,6 +2,10 @@ package com.github.deityexe.command;
 
 import com.github.deityexe.event.GuildEvent;
 import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.entity.server.Server;
+import org.javacord.api.entity.channel.Channel;
+import org.javacord.api.entity.user.User;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -53,4 +57,41 @@ public interface ICommandEnvironment {
      * @param guildEvent The event to be removed.
      */
     void removeEvent(GuildEvent guildEvent);
+
+    /**
+     * Retrieve the server object.
+     *
+     * @return The server object.
+     */
+    Server getServer();
+
+    /**
+     * Retrieves the channel the bot is using.
+     *
+     * @return The channel of the bot.
+     */
+    Channel getChannel();
+
+    /**
+     * Retrieves the channel the bot is using as text channel.
+     *
+     * @return The text channel of the bot.
+     */
+    TextChannel getTextChannel();
+
+    /**
+     * Checks, if the given user has the manager role.
+     *
+     * @param user The user to check for the manager role.
+     * @return True, if the user has the manager role.
+     */
+    boolean isManager(User user);
+
+    /**
+     * Checks, if the user has the admin role.
+     *
+     * @param user The user to check for the admin role.
+     * @return True, if user has the admin role.
+     */
+    boolean isAdmin(User user);
 }

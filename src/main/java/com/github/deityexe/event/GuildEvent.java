@@ -1,7 +1,7 @@
 package com.github.deityexe.event;
 
-import com.github.deityexe.DeliverableError;
 import com.github.deityexe.command.NewEventCommand;
+import com.github.deityexe.util.DateUtil;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.emoji.Emoji;
 import org.javacord.api.entity.message.Message;
@@ -71,6 +71,11 @@ public abstract class GuildEvent {
     private static final String PROP_CHANNEL_ID = "channelId";
 
     /**
+     * Channel the message has been posted on.
+     */
+    private static final String PROP_ORGANIZER = "organizer";
+
+    /**
      * Class shall be set modified whenever something has changed.
      */
     private boolean modified = true;
@@ -125,6 +130,7 @@ public abstract class GuildEvent {
 
         this.setName(command.getName());
         this.setDateFromString(command.getDate(), command.getTime());
+        this.setOrganizer(command.getOrganizer());
         this.eventFile = fileFromUuid(eventFolder, uuid);
     }
 
@@ -171,7 +177,16 @@ public abstract class GuildEvent {
      * @param time The new time of the event.
      */
     public void setDateFromString(final String date, final String time) {
-        this.setDate(this.dateFromStrings(date, time));
+        this.setDate(this.dateUtil.dateFromStrings(date, time));
+    }
+
+    /**
+     * Sets the name of the person organizing the event.
+     *
+     * @param organizer The person organizing the event.
+     */
+    public void setOrganizer(final String organizer) {
+        this.setString(PROP_ORGANIZER, organizer);
     }
 
     /**
@@ -289,6 +304,15 @@ public abstract class GuildEvent {
     }
 
     /**
+     * Getter for the account name of the organizer.
+     *
+     * @return Account name of the organizer.
+     */
+    public String getOrganizer() {
+        return this.getProperty(PROP_ORGANIZER, null);
+    }
+
+    /**
      * Returns a property value.
      *
      * @param name The properties name.
@@ -335,17 +359,6 @@ public abstract class GuildEvent {
             return UUID.fromString("00000000-0000-0000-0000-000000000000");
         }
         return UUID.fromString(this.getProperty(PROP_UUID));
-    }
-
-    /**
-     * Gets the date of the event.
-     *
-     * @return Date of the event as a {@link Calendar} object.
-     */
-    public Calendar getDateTime() {
-        Calendar rc = Calendar.getInstance();
-        rc.setTimeInMillis(this.getLong(PROP_DATE, 0));
-        return rc;
     }
 
     /**
@@ -495,51 +508,39 @@ public abstract class GuildEvent {
     }
 
     /**
-     * Parses a date and time string into a combined Calendar instance.
-     *
-     * @param date The date to be parsed.
-     * @param time The time to be parsed.
-     * @return The Calendar instance.
-     */
-    protected Calendar dateFromStrings(final String date, final String time) {
-        Calendar rc = Calendar.getInstance();
-
-        String[] dateParts = date.split("\\.");
-        if (dateParts.length < 3) {
-            logger.log(Level.SEVERE, String.format("invalid date: %s", date));
-            throw new DeliverableError("Ungültiges Datum gefunden. Bitte TT.MM.JJJJ benutzen.");
-        }
-
-        String[] timeParts = time.split(":");
-        if (timeParts.length < 2) {
-            logger.log(Level.SEVERE, String.format("invalid time: %s", time));
-            throw new DeliverableError("Ungültige Zeit gefunden. Bitte HH:MM oder HH:MM:SS benutzen.");
-        }
-
-        rc.set(Integer.valueOf(dateParts[2]),Integer.valueOf(dateParts[1]) - 1, Integer.valueOf(dateParts[0]),
-                Integer.valueOf(timeParts[0]), Integer.valueOf(timeParts[1]));
-        return rc;
-    }
-
-    /**
-     * Retuerns a time representation of the event date.
+     * Returns a time representation of the event date.
      *
      * @return Time of the event.
      */
     public String getTime() {
-        final Calendar date = this.getDateTime();
-        return String.format("%02d:%02d", date.get(Calendar.HOUR_OF_DAY), date.get(Calendar.MINUTE));
+        return this.dateUtil.getTime(this.getTimestamp());
     }
 
     /**
-     * Gets the date as formated string.
+     * Gets the date as formatted string.
      *
      * @return Date as format string.
      */
     public String getDate() {
-        final Calendar date = this.getDateTime();
-        return String.format("%02d.%02d.%04d", date.get(Calendar.DAY_OF_MONTH), date.get(Calendar.MONTH) + 1,
-                date.get(Calendar.YEAR));
+        return this.dateUtil.getDate(this.getTimestamp());
+    }
+
+    /**
+     * Getter for the timestamp of the event.
+     *
+     * @return Timestamp of the event.
+     */
+    public long getTimestamp() {
+        return this.getLong(PROP_DATE, 0);
+    }
+
+    /**
+     * Retrieves the calendar object for the event.
+     *
+     * @return The calendar object for the event.
+     */
+    public Calendar getCalendar() {
+        return this.dateUtil.calendarFromTimestamp(this.getTimestamp());
     }
 
     /**
@@ -663,6 +664,7 @@ public abstract class GuildEvent {
      * @return True, if event has been handled by the class.
      */
     public boolean dispatchEvent(ReactionRemoveEvent event, DiscordApi api) {
+        final String fmt = event.getEmoji().asUnicodeEmoji().get();
         if (event.getMessageId() != this.getMessageId() || event.getUser() == api.getYourself()) {
             return false;
         }
@@ -855,4 +857,19 @@ public abstract class GuildEvent {
          */
         public abstract List<UUID> listStoredEvents();
     }
+
+    /**
+     * Comparator to sort guild events based on their date.
+     */
+    public static Comparator<GuildEvent> compareEventTime = new Comparator<GuildEvent>() {
+        @Override
+        public int compare(GuildEvent event1, GuildEvent event2) {
+            return Long.compare(event1.getTimestamp(), event2.getTimestamp());
+        }
+    };
+
+    /**
+     * Util for date conversion.
+     */
+    protected final DateUtil dateUtil = new DateUtil();
 }
