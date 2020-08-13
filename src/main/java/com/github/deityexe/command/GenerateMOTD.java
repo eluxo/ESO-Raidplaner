@@ -3,7 +3,6 @@ package com.github.deityexe.command;
 import com.github.deityexe.DeliverableError;
 import com.github.deityexe.event.GuildEvent;
 import com.github.deityexe.util.DateUtil;
-import com.sun.xml.internal.ws.util.StringUtils;
 import org.javacord.api.event.message.MessageCreateEvent;
 
 import java.util.Calendar;
@@ -114,7 +113,7 @@ public class GenerateMOTD extends CommandMessage {
             final Calendar date = event.getCalendar();
             final String organizer = event.getOrganizer();
             builder.append(String.format("%s %s - %s - %s", this.dateUtil.getDowShort(date),
-                    this.dateUtil.getDateShort(date), StringUtils.capitalize(event.getTypeName()), event.getName()));
+                    this.dateUtil.getDateShort(date), this.capitalize(event.getTypeName()), event.getName()));
             if (organizer != null) {
                 builder.append(String.format(" (%s)\n", organizer));
             } else {
@@ -123,6 +122,16 @@ public class GenerateMOTD extends CommandMessage {
         }
         this.writeFooter(builder);
         return builder.toString();
+    }
+
+    /**
+     * Just convert the first character of the given string to an upper character.
+     *
+     * @param text The word to be capitalized.
+     * @return The capitalized word.
+     */
+    private String capitalize(final String text) {
+        return text.substring(0, 1).toUpperCase() + text.substring(1);
     }
 
     private String noEventsMotd(final Calendar startDate, final Calendar endDate) {
