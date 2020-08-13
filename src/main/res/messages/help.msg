@@ -5,29 +5,30 @@ Hinweis: Alle Parameter enden beim nächsten Leerzeichen. Soll ein Feld Leerzeic
 
 __**Event erstellen:**__
 `
-- !new [Typ] [Name] [Datum] [Uhrzeit] [...]
+- !new [Typ] [Name] [Datum] [Uhrzeit] [Organisator] [...]
          [Typ]: Art oder Typ des Events (raid, bossrun, pvp)
          [Name]: Eindeutiger Name des Events
          [Datum]: Datum formatiert als TT.MM.JJJJ
          [Uhrzeit]: Datum formatiert als HH:MM
+         [Organisator]: Spieler der das Event organisert. Wird in der IG MOTD eingetragen.
          [...]: Eventspezifische Parameter
 `
 
 _**Raid:**_
 `
-- !new raid [Name] [Datum] [Uhrzeit] [Anzahl Tanks] [Anzahl Healer] [Anzahl DDs] <Beschreibung>
-         Beispiel: !new raid vCR+3 11.11.2019 11:11 3 2 7 "Wir wollen uns nochmal an nCR+3 versuchen."
+- !new raid [Name] [Datum] [Uhrzeit] [Organisator] [Anzahl Tanks] [Anzahl Healer] [Anzahl DDs] <Beschreibung>
+         Beispiel: !new raid vCR+3 11.11.2019 11:11 @osterhase 3 2 7 "Wir wollen uns nochmal an nCR+3 versuchen."
 `
 _**Worldboss Run:**_
 `
- - !new bossrun [Name] [Datum] [Uhrzeit] <Beschreibung>
-         Beispiel: !new bossrun Kargstein 11.11.2019 11:11 "Gruppenbosse in Kargstein"
+ - !new bossrun [Name] [Datum] [Uhrzeit] [Organisator] <Beschreibung>
+         Beispiel: !new bossrun Kargstein 11.11.2019 11:11 @osterhase "Gruppenbosse in Kargstein"
 `
 _**PvP:**_
 `
- - !new pvp [Name] [Datum] [Uhrzeit] [Allianz] <Beschreibung>
+ - !new pvp [Name] [Datum] [Uhrzeit] [Organisator] [Allianz] <Beschreibung>
          [Allianz]: ebenerz, aldmeri oder dolchsturz
-         Beispiel: !new pvp Kaiserstadt 11.11.2019 11:11 ebenerz "Dailies und Telvar-Farmrun in der Kaiserstadt"
+         Beispiel: !new pvp Kaiserstadt 11.11.2019 11:11 @osterhase ebenerz "Dailies und Telvar-Farmrun in der Kaiserstadt"
 `
 
 Hinweis: Die <Beschreibung> ist optional.
@@ -57,11 +58,16 @@ __**Angemeldete Teilnehmer anzeigen**__
          Beispiel: !userlist vCR+3
 `
 
+__**MOTD generieren**__
+`
+ - !motd [Datum]
+         [Datum]: Startdatum für den MOTD-Eintrag.
+         Beispiel: !motd 10.08.2020
+`
+
 __**Hilfe anzeigen**__
 `
  - !help
 `
 
 Der Quellcode für diesen Bot ist unter https://github.com/eluxo/ESO-Raidplaner zu finden.
-
-Der Bot basiert auf einem Fork von https://github.com/DeityEXE/ESO-Raidplaner .
