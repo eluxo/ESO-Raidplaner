@@ -64,7 +64,7 @@ public class GenerateMOTD extends CommandMessage {
 
         final long startTS = startDate.getTimeInMillis();
         final long endTS = startTS + (PERIOD_DURATION * 1000);
-        final Calendar endDate = (Calendar) dateUtil.calendarFromTimestamp(endTS);
+        final Calendar endDate = (Calendar) dateUtil.calendarFromTimestamp(endTS - 60000);
 
         logger.info(String.format("collect events between %s %s and %s %s",
                 this.dateUtil.getDate(startDate), this.dateUtil.getTime(startDate),
@@ -137,7 +137,7 @@ public class GenerateMOTD extends CommandMessage {
     private String noEventsMotd(final Calendar startDate, final Calendar endDate) {
         final StringBuilder builder = new StringBuilder();
         this.writeHeader(builder, startDate, endDate);
-        builder.append("Noch keine Events für den angegebenen Zeitraum vorhanden.");
+        builder.append("Noch keine Events für den angegebenen Zeitraum vorhanden.\n");
         this.writeFooter(builder);
         return builder.toString();
     }
