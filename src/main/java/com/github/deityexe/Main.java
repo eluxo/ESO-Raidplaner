@@ -2,6 +2,7 @@ package com.github.deityexe;
 
 import com.github.deityexe.event.GuildEvent;
 import com.github.deityexe.event.EventFactory;
+import com.github.deityexe.util.BotConfig;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 
@@ -18,10 +19,9 @@ public class Main {
 
     public static void main(String[] args) {
         logger.info("entering main");
-        Properties properties = new Properties();
-        String prefix = properties.getPrefix();
+        final String prefix = "!";
+        final String token = BotConfig.getInstance().getBotToken();
 
-        String token = properties.getToken();
         if (token == null) {
             System.out.println("No token specified in \"bot.properties\"! Please add a token to continue.");
             return;
