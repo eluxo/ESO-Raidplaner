@@ -33,7 +33,7 @@ public class GenerateMOTD extends CommandMessage {
     /**
      * Duration of the MOTD period in seconds.
      */
-    private static final long PERIOD_DURATION = 8 * 24 * 60 * 60;
+    private static final long PERIOD_DURATION = 7 * 24 * 60 * 60;
 
     /**
      * Constructor.
