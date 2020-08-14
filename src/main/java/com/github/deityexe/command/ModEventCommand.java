@@ -6,6 +6,7 @@ import com.github.deityexe.util.BotConfig;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
 
@@ -54,10 +55,13 @@ public class ModEventCommand extends CommandMessage {
         final String modField = this.arg(ARG_MOD_FIELD);
         final ICommandEnvironment env = this.getCommandEnvironment();
         final DiscordApi api = env.getDiscordApi();
+        final MessageCreateEvent event = this.getMessageCreateEvent();
+        boolean found = false;
 
         Collection<GuildEvent> guildEvents = env.getGuildEvents();
         for (GuildEvent guildEvent : guildEvents) {
             if (guildEvent.getName().equals(eventName)) {
+                found = true;
                 final long messageId = guildEvent.getMessageId();
                 try {
                     logger.info(String.format("modifying guild event %s for parameter %s", eventName, modField));
@@ -75,6 +79,11 @@ public class ModEventCommand extends CommandMessage {
                     logger.info(String.format("update event message in channel %d", channel.getId()));
                     Message.edit(api, guildEvent.getChannelId(), messageId, guildEvent.getEmbed()).join();
                     guildEvent.store();
+
+                    // send feedback to user
+                    MessageBuilder msgbuilder = new MessageBuilder()
+                            .append(String.format("Feld %s im Event %s geändert.", modField, eventName));
+                    msgbuilder.send(event.getChannel()).join();
                 } catch (DeliverableError e) {
                     throw e;
                 } catch (Exception e) {
@@ -84,36 +93,11 @@ public class ModEventCommand extends CommandMessage {
             }
         }
 
-        /*
-        final String eventDate = this.arg(ARG_EVENT_DATE);
-        final String eventTime = this.arg(ARG_EVENT_TIME);
-        final ICommandEnvironment env = this.getCommandEnvironment();
-        final DiscordApi api = env.getDiscordApi();
-        final MessageCreateEvent event = this.getMessageCreateEvent();
-
-        Collection<GuildEvent> guildEvents = env.getGuildEvents();
-        for (GuildEvent guildEvent : guildEvents) {
-            if (guildEvent.getName().equals(eventName)) {
-                final long messageId = guildEvent.getMessageId();
-                try {
-                    logger.info(String.format("modifying message id %d in channel %d", messageId,
-                            event.getChannel().getId()));
-                    final Server server = this.getCommandEnvironment().getServer();
-                    final TextChannel channel = server.getTextChannelById(guildEvent.getChannelId()).get();
-                    // make sure that message exists in our channel
-                    channel.getMessageById(messageId).join();
-                    guildEvent.setDateFromString(eventDate, eventTime);
-                    Message.edit(api, channel.getId(), messageId, guildEvent.getEmbed()).join();
-                    guildEvent.store();
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "failed to update event", e);
-                    throw new DeliverableError("Fehler beim Aktualisieren des Events.");
-                }
-            }
+        if (!found) {
+            throw new DeliverableError(String.format("Kein Event mit Namen %s gefunden.", eventName));
         }
 
         // TODO(eluxo): check, if we want to remove it in case of exceptions
         this.removeCommand();
-        */
     }
 }
