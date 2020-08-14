@@ -188,7 +188,7 @@ public class CommandMessage implements Executable {
         try {
             event.getMessage().delete().join();
         } catch (CompletionException e) {
-            logger.log(Level.SEVERE, "failed to remove message from chat", e);
+            logger.info("failed to remove message from chat");
         }
     }
 
