@@ -1,5 +1,9 @@
 package com.github.deityexe.event;
 
+import com.github.deityexe.DeliverableError;
+import com.github.deityexe.command.CommandFormatException;
+import com.github.deityexe.command.CommandMessage;
+import com.github.deityexe.command.ModEventCommand;
 import com.github.deityexe.command.NewEventCommand;
 import com.github.deityexe.util.DateUtil;
 import org.javacord.api.DiscordApi;
@@ -34,6 +38,11 @@ public abstract class GuildEvent {
      * Offset for child class arguments.
      */
     protected static final int ARG_OFFSET = NewEventCommand.MINIMUM_ARGUMENT_COUNT - 1;
+
+    /**
+     * List of modifification handlers for this event.
+     */
+    private final Map<String, IModifyEventInterface> eventModifierMap;
 
     /**
      * Name field for the event.
@@ -103,17 +112,9 @@ public abstract class GuildEvent {
      */
     public GuildEvent(final File eventFolder, final UUID eventId) throws IOException {
         logger.info(String.format("loading %s from %s", this.getEventType(), eventId.toString()));
+        this.eventModifierMap = this.initModifyEvents();
         this.eventFile = fileFromUuid(eventFolder, eventId);
         this.load();
-    }
-
-    /**
-     * Getter for the type of the event.
-     *
-     * @return Type name of the event.
-     */
-    public String getTypeName() {
-        return this.getEventType();
     }
 
     /**
@@ -125,6 +126,7 @@ public abstract class GuildEvent {
      */
     public GuildEvent(final File eventFolder, NewEventCommand command) throws IOException {
         logger.info(String.format("creating %s named %s from command", command.getType(), command.getName()));
+        this.eventModifierMap = this.initModifyEvents();
         final UUID uuid = UUID.randomUUID();
         this.setProperty(PROP_UUID, uuid.toString());
 
@@ -132,6 +134,68 @@ public abstract class GuildEvent {
         this.setDateFromString(command.getDate(), command.getTime());
         this.setOrganizer(command.getOrganizer());
         this.eventFile = fileFromUuid(eventFolder, uuid);
+    }
+
+    /**
+     * Initializes the modification interfaces for the event.
+     *
+     * To add more modifiers, child classes can override this method and add own entries within their construction.
+     *
+     * @return The initialized modification map.
+     */
+    protected Map<String, IModifyEventInterface> initModifyEvents() {
+        final HashMap<String, IModifyEventInterface> rc = new HashMap<>();
+
+        rc.put(PROP_DATE, new IModifyEventInterface() {
+            @Override
+            public void modify(final CommandMessage command, final int argIndex) {
+                if (command.getArgs().length < argIndex + 2) {
+                    throw new CommandFormatException("Nicht genügend Parameter angegeben. Benötigt Datum und Zeit.");
+                }
+
+                setDateFromString(command.arg(argIndex), command.arg(argIndex + 1));
+            }
+        });
+
+        rc.put(PROP_DESCRIPTION, new IModifyEventInterface() {
+            @Override
+            public void modify(final CommandMessage command, final int argIndex) {
+                setDescription(command.arg(argIndex));
+            }
+        });
+
+        rc.put(PROP_ORGANIZER, new IModifyEventInterface() {
+            @Override
+            public void modify(final CommandMessage command, final int argIndex) {
+                setOrganizer(command.arg(argIndex));
+            }
+        });
+
+        return rc;
+    }
+
+    /**
+     * Getter for the name of the modification object for the given field.
+     *
+     * @param name Name of the field to retrieve the modifier for.
+     * @return The modifier object.
+     * @throws DeliverableError This is thrown whenever the name could not be found.
+     */
+    public IModifyEventInterface getEventModifierByName(final String name) {
+        if (!this.eventModifierMap.containsKey(name)) {
+            throw new DeliverableError("Unbekannter Parameter " + name);
+        }
+
+        return this.eventModifierMap.get(name);
+    }
+
+    /**
+     * Getter for the type of the event.
+     *
+     * @return Type name of the event.
+     */
+    public String getTypeName() {
+        return this.getEventType();
     }
 
     /**
@@ -867,6 +931,19 @@ public abstract class GuildEvent {
             return Long.compare(event1.getTimestamp(), event2.getTimestamp());
         }
     };
+
+    /**
+     * Interface defining a callable to be executed in order to modify a specific event.
+     */
+    public interface IModifyEventInterface {
+        /**
+         * Called when the associated field of the event should be modified.
+         *
+         * @param command The command holding the arguments to be used in order to modify the event.
+         * @param argIndex The index of the first parameter used for the value modification.
+         */
+        void modify(final CommandMessage command, final int argIndex);
+    }
 
     /**
      * Util for date conversion.

@@ -19,9 +19,20 @@ public class ModEventCommand extends CommandMessage {
      */
     private static final Logger logger = Logger.getLogger(ModEventCommand.class.getName());
 
+    /**
+     * Name of the event to be modified.
+     */
     private static final int ARG_EVENT_NAME = 0;
-    private static final int ARG_EVENT_DATE = 1;
-    private static final int ARG_EVENT_TIME = 2;
+
+    /**
+     * Name of the field in the event to be modified.
+     */
+    private static final int ARG_MOD_FIELD = 1;
+
+    /**
+     * Index of first parameter.
+     */
+    private static final int ARG_FIRST_PARAM = 2;
 
     /**
      * Constructor.
@@ -40,6 +51,40 @@ public class ModEventCommand extends CommandMessage {
         final String eventName = this.arg(ARG_EVENT_NAME);
         logger.info(String.format("executing for event %s", eventName));
 
+        final String modField = this.arg(ARG_MOD_FIELD);
+        final ICommandEnvironment env = this.getCommandEnvironment();
+        final DiscordApi api = env.getDiscordApi();
+
+        Collection<GuildEvent> guildEvents = env.getGuildEvents();
+        for (GuildEvent guildEvent : guildEvents) {
+            if (guildEvent.getName().equals(eventName)) {
+                final long messageId = guildEvent.getMessageId();
+                try {
+                    logger.info(String.format("modifying guild event %s for parameter %s", eventName, modField));
+
+                    // first we make sure that the event message still exists
+                    final Server server = this.getCommandEnvironment().getServer();
+                    final TextChannel channel = server.getTextChannelById(guildEvent.getChannelId()).get();
+                    channel.getMessageById(messageId).join();
+
+                    // retrieve modification handler for parameter
+                    final GuildEvent.IModifyEventInterface modify = guildEvent.getEventModifierByName(modField);
+                    modify.modify(this, ARG_FIRST_PARAM);
+
+                    // and now, make sure, that the message is in sync
+                    logger.info(String.format("update event message in channel %d", channel.getId()));
+                    Message.edit(api, guildEvent.getChannelId(), messageId, guildEvent.getEmbed()).join();
+                    guildEvent.store();
+                } catch (DeliverableError e) {
+                    throw e;
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "failed to update event", e);
+                    throw new DeliverableError("Fehler beim Aktualisieren des Events.");
+                }
+            }
+        }
+
+        /*
         final String eventDate = this.arg(ARG_EVENT_DATE);
         final String eventTime = this.arg(ARG_EVENT_TIME);
         final ICommandEnvironment env = this.getCommandEnvironment();
@@ -69,5 +114,6 @@ public class ModEventCommand extends CommandMessage {
 
         // TODO(eluxo): check, if we want to remove it in case of exceptions
         this.removeCommand();
+        */
     }
 }
