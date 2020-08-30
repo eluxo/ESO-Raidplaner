@@ -6,6 +6,7 @@ import com.github.deityexe.command.CommandMessage;
 import com.github.deityexe.command.ModEventCommand;
 import com.github.deityexe.command.NewEventCommand;
 import com.github.deityexe.util.DateUtil;
+import com.github.deityexe.util.Verifier;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.emoji.Emoji;
 import org.javacord.api.entity.message.Message;
@@ -132,7 +133,11 @@ public abstract class GuildEvent {
 
         this.setName(command.getName());
         this.setDateFromString(command.getDate(), command.getTime());
-        this.setOrganizer(command.getOrganizer());
+        final String organizer = command.getOrganizer();
+        if (!(new Verifier()).mayBeAccount(organizer)) {
+            throw new DeliverableError("Ungültiger Parameter für Organisator.");
+        }
+        this.setOrganizer(organizer);
         this.eventFile = fileFromUuid(eventFolder, uuid);
     }
 
